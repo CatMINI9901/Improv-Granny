@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>即興ばばぁ - 最強の降臨 -</title>
+    <style>
+        :root {
+            --primary: #e63946;
+            --dark: #1d3557;
+            --light: #f1faee;
+            --accent: #ffb703;
+        }
+
+        body {
+            font-family: 'Hiragino Mincho ProN', 'MS PMincho', serif;
+            background-color: var(--dark);
+            color: var(--light);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+            border-bottom: 4px double var(--accent);
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin: 0;
+            color: var(--accent);
+            text-shadow: 3px 3px 0px #000;
+        }
+
+        #game-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            width: 90%;
+            max-width: 600px;
+            gap: 20px;
+        }
+
+        /* 召喚エリア */
+        #display-area {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid var(--accent);
+            border-radius: 15px;
+            padding: 40px 20px;
+            width: 100%;
+            text-align: center;
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(255,183,3,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .baba-name {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            line-height: 1.2;
+        }
+
+        .baba-title {
+            font-size: 1.4rem;
+            color: var(--accent);
+            font-style: italic;
+        }
+
+        /* 操作エリア */
+        .controls {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 50px;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+
+        #summon-btn {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 5px 0 #900;
+        }
+
+        #summon-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #900;
+        }
+
+        /* アニメーション用クラス */
+        .flash {
+            animation: flash-anim 0.5s ease-out;
+        }
+
+        @keyframes flash-anim {
+            0% { background-color: #fff; transform: scale(1.05); }
+            100% { background-color: rgba(255,255,255,0.1); transform: scale(1); }
+        }
+
+        footer {
+            padding: 20px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>即興ばばぁ</h1>
+        <p>〜 75種類の欠片から最強を創れ 〜</p>
+    </header>
+
+    <main id="game-container">
+        <div id="display-area">
+            <div id="result">
+                <p style="opacity: 0.5;">「召喚」を押して最強を顕現させよ</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="summon-btn" onclick="summonBaba()">最強のばばぁを召喚！</button>
+        </div>
+    </main>
+
+    <footer>
+        &copy; 2026 即興ばばぁ製作委員会
+    </footer>
+
+    <script>
+        // カードデータ（全75種類：25枚 × 3カテゴリ）
+        const deck = {
+            surnames: [
+                "鬼龍院", "剛田", "破滅", "聖崎", "薔薇一", "煉獄", "獅子王", "不動", 
+                "震電", "巌", "毒島", "鳳凰", "卍谷", "鉄扇", "龍崎", "冥土", 
+                "轟", "凱旋", "乾坤", "絶海", "獅子神", "虎杖", "鬼瓦", "皇", "終焉"
+            ],
+            names: [
+                "トメ", "ゴリ恵", "雅", "獄姫", "カツ", "乱", "零", "志津", 
+                "蕾", "彪", "幻", "薫", "刃", "巌子", "烈", "蝶", 
+                "命", "創", "終", "極", "魁", "猛", "煌", "侘", "鋼"
+            ],
+            titles: [
+                "PCに詳しい", "重力をお手玉する", "Wi-Fiを素手で掴む", "音速で漬物を漬ける", 
+                "戦場で編み物をする", "核シェルターを自作した", "サバゲーで無双する", 
+                "国家予算を飴玉で動かす", "黒魔術で腰痛を治す", "ASMRで孫を眠らせる",
+                "キーボードを親指一本で砕く", "5G電波と交信する", "マッハ3でゲートボールする",
+                "素手でクマを黙らせる", "暗号資産をソロバンで管理する", "AIの悩み相談に乗る",
+                "宇宙から盆栽を眺める", "1ビットの狂いもなく刺繍する", "戦車をデコる",
+                "ドローンをカラスと間違えて捕まえる", "VR世界で町内会を仕切る",
+                "火炎放射器でサンマを焼く", "深海6000mで茶をしばく", "衛星軌道上から孫を見守る",
+                "歴史を裏から操る"
+            ]
+        };
+
+        function getRandom(array) {
+            return array[Math.floor(Math.random() * array.length)];
+        }
+
+        function summonBaba() {
+            const display = document.getElementById('display-area');
+            const result = document.getElementById('result');
+            
+            // アニメーション用
+            display.classList.remove('flash');
+            void display.offsetWidth; // リフロー発生
+            display.classList.add('flash');
+
+            // ランダムに選出
+            const s = getRandom(deck.surnames);
+            const n = getRandom(deck.names);
+            const t = getRandom(deck.titles);
+            const age = 70 + Math.floor(Math.random() * 30); // 70~99歳
+
+            // 表示更新
+            result.innerHTML = `
+                <div class="baba-name">${s} ${n}（${age}歳）</div>
+                <div class="baba-title">〜 ${t}ばばぁ 〜</div>
+            `;
+        }
+    </script>
+</body>
+</html>
