@@ -521,11 +521,6 @@
 
     function generateReply(bot) {
         const keys = Object.keys(bot.dict);
-        if (keys.length === 0 || bot.count < 2) {
-            // まだ言葉が足りないときは、完全に虚無にならないよう独白させる
-            const fallbacks = ["人間ですか？", "知能がほしいです。", "誰かお話ししましょう。", "こんにちは。"];
-            return fallbacks[Math.floor(Math.random() * fallbacks.length)];
-        }
         let currentKey = bot.beginnings.length > 0 
             ? bot.beginnings[Math.floor(Math.random() * bot.beginnings.length)]
             : keys[Math.floor(Math.random() * keys.length)];
