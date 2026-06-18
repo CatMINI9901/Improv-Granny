@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>純粋培養マルコフ・トーク（履歴も完全保存版）</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>マルコフ・フレンズ</title>
     <style>
         :root {
             --line-green: #7493cd;
@@ -11,66 +11,192 @@
             --my-bubble: #85e249;
             --bot-bubble: #ffffff;
             --text-main: #333333;
+            --bg-gray: #f4f4f4;
+        }
+
+        /* 全体リセット（スマホのスクロールやタップの挙動を安定させる） */
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             margin: 0;
             padding: 0;
             font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
-            background-color: #f0f0f0;
+            background-color: #eef2f3;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            height: 100dvh; /* 最新スマホのブラウザバー対策 */
+            overflow: hidden;
         }
 
-        .chat-container {
+        /* メインコンテナ */
+        .app-container {
             width: 100%;
             max-width: 450px;
-            height: 100vh;
-            background-color: var(--line-green);
+            height: 100%;
+            background-color: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            position: relative;
         }
 
-        .chat-header {
+        /* 共通ヘッダー */
+        .app-header {
             background-color: var(--line-header);
             color: white;
-            padding: 15px;
-            font-size: 1.1rem;
+            padding: 16px;
+            font-size: 1.2rem;
             font-weight: bold;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            z-index: 10;
+            height: 56px;
+            flex-shrink: 0;
         }
 
-        .header-title {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .header-btns {
+        .header-btn-group {
             display: flex;
             gap: 8px;
         }
 
-        .header-btn {
+        .text-btn {
             background: none;
             border: 1px solid #ffffff66;
             color: white;
-            padding: 5px 10px;
+            padding: 4px 10px;
             border-radius: 4px;
-            cursor: pointer;
             font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        /* ビュー（画面切替）の設定 */
+        .view {
+            display: none;
+            flex-grow: 1;
+            flex-direction: column;
+            height: calc(100% - 56px);
+            overflow: hidden;
+        }
+
+        .view.active {
+            display: flex;
+        }
+
+        /* ==================== 1. 友だち一覧ビュー ==================== */
+        .friend-view {
+            background-color: white;
+        }
+
+        /* 新規Bot追加エリア */
+        .add-friend-box {
+            padding: 15px;
+            background-color: var(--bg-gray);
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+        }
+
+        .add-friend-box input {
+            flex-grow: 1;
+            padding: 10px 15px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        .add-btn {
+            background-color: #5c7299;
+            color: white;
+            border: none;
+            padding: 0 16px;
+            border-radius: 20px;
             font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* リストエリア */
+        .friend-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .friend-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
             transition: background 0.2s;
         }
 
-        .header-btn:hover {
-            background: rgba(255, 255, 255, 0.15);
+        .friend-item:active {
+            background-color: #f5f5f5; /* スマホのタップ感 */
+        }
+
+        .friend-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .friend-avatar {
+            width: 48px;
+            height: 48px;
+            background: #eef2f3;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.6rem;
+            border: 1px solid #ddd;
+        }
+
+        .friend-name-box {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .friend-name {
+            font-weight: bold;
+            color: var(--text-main);
+            font-size: 1rem;
+        }
+
+        .friend-count {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .delete-btn {
+            background-color: #ff5a5a;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #999;
+            margin-top: 40px;
+            font-size: 0.95rem;
+        }
+
+        /* ==================== 2. トーク画面ビュー ==================== */
+        .chat-view {
+            background-color: var(--line-green);
         }
 
         .chat-history {
@@ -82,17 +208,17 @@
             gap: 15px;
         }
 
+        /* メッセージ配置 */
         .message {
             display: flex;
             align-items: flex-start;
             max-width: 85%;
         }
 
-        .message.bot {
-            align-self: flex-start;
-        }
+        .message.bot { align-self: flex-start; }
+        .message.user { align-self: flex-end; flex-direction: row-reverse; }
 
-        .bot-avatar {
+        .chat-avatar {
             width: 40px;
             height: 40px;
             background: #5c7299;
@@ -102,11 +228,7 @@
             align-items: center;
             font-size: 1.4rem;
             margin-right: 8px;
-        }
-
-        .message.user {
-            align-self: flex-end;
-            flex-direction: row-reverse;
+            flex-shrink: 0;
         }
 
         .bubble {
@@ -119,17 +241,8 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
-        .bot .bubble {
-            background-color: var(--bot-bubble);
-            color: var(--text-main);
-            border-top-left-radius: 2px;
-        }
-
-        .user .bubble {
-            background-color: var(--my-bubble);
-            color: var(--text-main);
-            border-top-right-radius: 2px;
-        }
+        .bot .bubble { background-color: var(--bot-bubble); color: var(--text-main); border-top-left-radius: 2px; }
+        .user .bubble { background-color: var(--my-bubble); color: var(--text-main); border-top-right-radius: 2px; }
 
         .meta-info {
             display: flex;
@@ -140,16 +253,10 @@
             margin: 0 5px;
             min-width: 35px;
         }
+        .user .meta-info { text-align: right; }
+        .read-status { color: #e4ffad; font-weight: bold; }
 
-        .user .meta-info {
-            text-align: right;
-        }
-
-        .read-status {
-            color: #e4ffad;
-            font-weight: bold;
-        }
-
+        /* 入力エリア */
         .chat-input-area {
             background-color: #ffffff;
             padding: 10px;
@@ -157,14 +264,15 @@
             gap: 8px;
             align-items: center;
             border-top: 1px solid #ddd;
+            flex-shrink: 0;
         }
 
         .chat-input-area textarea {
             flex-grow: 1;
-            height: 36px;
+            height: 38px;
             border: 1px solid #ccc;
-            border-radius: 18px;
-            padding: 8px 15px;
+            border-radius: 19px;
+            padding: 9px 15px;
             box-sizing: border-box;
             font-size: 0.95rem;
             resize: none;
@@ -176,225 +284,339 @@
             background-color: #5c7299;
             color: white;
             border: none;
-            width: 50px;
-            height: 36px;
-            border-radius: 18px;
+            width: 55px;
+            height: 38px;
+            border-radius: 19px;
             font-weight: bold;
             cursor: pointer;
+            flex-shrink: 0;
         }
 
-        .typing-indicator {
-            display: flex;
-            gap: 4px;
-            padding: 4px 0;
-        }
-        .typing-indicator span {
-            width: 6px;
-            height: 6px;
-            background: #aaa;
-            border-radius: 50%;
-            animation: blink 1.4s infinite both;
-        }
+        /* タイピングアニメーション */
+        .typing-indicator { display: flex; gap: 4px; padding: 4px 0; }
+        .typing-indicator span { width: 6px; height: 6px; background: #aaa; border-radius: 50%; animation: blink 1.4s infinite both; }
         .typing-indicator span:nth-child(2) { animation-delay: .2s; }
         .typing-indicator span:nth-child(3) { animation-delay: .4s; }
-        @keyframes blink {
-            0% { opacity: .2; }
-            20% { opacity: 1; }
-            100% { opacity: .2; }
-        }
+        @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
     </style>
 </head>
 <body>
 
-<div class="chat-container">
-    <div class="chat-header">
-        <div class="header-title">記憶ゼロのボット 🤖</div>
-        <div class="header-btns">
-            <button class="header-btn" onclick="exportJSON()">保存</button>
-            <button class="header-btn" onclick="triggerImport()">読込</button>
-            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
+<div class="app-container">
+    
+    <div id="friendView" class="view active">
+        <div class="app-header">
+            <span>友だち一覧 👥</span>
+            <div class="header-btn-group">
+                <button class="text-btn" onclick="exportAllData()">バックアップ</button>
+                <button class="text-btn" onclick="triggerImport()">復元</button>
+                <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAllData(event)">
+            </div>
+        </div>
+        
+        <div class="add-friend-box">
+            <input type="text" id="newBotName" placeholder="新しいBotの名前を入力" maxlength="15">
+            <button class="add-btn" onclick="addBot()">追加</button>
+        </div>
+        
+        <div class="friend-list" id="friendList">
+            </div>
+    </div>
+
+    <div id="chatView" class="view">
+        <div class="app-header">
+            <button class="text-btn" style="font-size: 1rem; padding: 2px 8px;" onclick="backToFriends()">＜ 戻る</button>
+            <span id="chatTitle">Botの名前</span>
+            <button class="text-btn" onclick="renameCurrentBot()">名前変更</button>
+        </div>
+        
+        <div class="chat-history" id="chatHistory">
+            </div>
+
+        <div class="chat-input-area">
+            <textarea id="userInput" placeholder="メッセージを入力" onkeydown="handleKeyDown(event)"></textarea>
+            <button onclick="sendMessage()">送信</button>
         </div>
     </div>
 
-    <div class="chat-history" id="chatHistory">
-        <!-- 初期メッセージ -->
-        <div class="message bot" id="initMessage">
-            <div class="bot-avatar">🤖</div>
-            <div class="bubble">私はまだ何も言葉を知りません。あなたが送信した言葉だけで学習します。何か話しかけてみてください！</div>
-            <div class="meta-info"><span class="time" id="initTime">00:00</span></div>
-        </div>
-    </div>
-
-    <div class="chat-input-area">
-        <textarea id="userInput" placeholder="メッセージを入力" onkeydown="handleKeyDown(event)"></textarea>
-        <button onclick="sendMessage()">送信</button>
-    </div>
 </div>
 
 <script>
-    let dict = {};
-    let beginnings = [];
-    let learnedSentenceCount = 0;
-    
-    // 【新設】画面上の会話履歴を記憶しておくための配列
-    let chatLog = [];
+    // 複数のBotを管理する配列
+    let bots = [];
+    let currentBotId = null;
 
-    // マルコフ連鎖の学習処理
-    function trainMarkov(text) {
+    // アバター用の絵文字のプール
+    const avatars = ["🤖", "🐱", "🐶", "🦊", "🐻", "🦁", "🐸", "🐹", "🦄", "🐼"];
+
+    // --- データの初期化とローカルストレージからの読み込み ---
+    function initApp() {
+        const localData = localStorage.getItem('markov_friends_data');
+        if (localData) {
+            try {
+                bots = JSON.parse(localData);
+            } catch (e) {
+                bots = [];
+            }
+        }
+
+        // まだ誰もいない場合は、最初の1人を自動作成
+        if (bots.length === 0) {
+            bots.push({
+                id: "default_bot",
+                name: "人間ボット1号",
+                avatar: "🤖",
+                dict: {},
+                beginnings: [],
+                count: 0,
+                chatLog: []
+            });
+            saveToLocalStorage();
+        }
+
+        renderBotList();
+    }
+
+    // ローカルストレージへの永続保存（スマホでの紛失を防ぐ）
+    function saveToLocalStorage() {
+        localStorage.setItem('markov_friends_data', JSON.stringify(bots));
+    }
+
+    // --- 画面切り替えルーチン ---
+    function switchView(viewName) {
+        document.getElementById('friendView').classList.remove('active');
+        document.getElementById('chatView').classList.remove('active');
+        
+        if (viewName === 'friends') {
+            document.getElementById('friendView').classList.add('active');
+            renderBotList();
+        } else if (viewName === 'chat') {
+            document.getElementById('chatView').classList.add('active');
+        }
+    }
+
+    // --- 友だち一覧画面の描画 ---
+    function renderBotList() {
+        const listEl = document.getElementById('friendList');
+        listEl.innerHTML = '';
+
+        if (bots.length === 0) {
+            listEl.innerHTML = '<div class="empty-message">友だちがまだいません。<br>上のフォームから新しく作ってみてね！</div>';
+            return;
+        }
+
+        bots.forEach(bot => {
+            const item = document.createElement('div');
+            item.className = 'friend-item';
+            // アイテム自体をタップしたらトーク画面へ
+            item.onclick = () => openChat(bot.id);
+
+            item.innerHTML = `
+                <div class="friend-info">
+                    <div class="friend-avatar">${bot.avatar || '🤖'}</div>
+                    <div class="friend-name-box">
+                        <div class="friend-name">${escapeHTML(bot.name)}</div>
+                        <div class="friend-count">覚えた言葉: ${bot.count} 回</div>
+                    </div>
+                </div>
+                <button class="delete-btn" onclick="deleteBot(event, '${bot.id}')">削除</button>
+            `;
+            listEl.appendChild(item);
+        });
+    }
+
+    // 新しいBotの追加
+    function addBot() {
+        const input = document.getElementById('newBotName');
+        const name = input.value.trim();
+        if (!name) return;
+
+        const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+        const newBot = {
+            id: 'bot_' + Date.now(),
+            name: name,
+            avatar: randomAvatar,
+            dict: {},
+            beginnings: [],
+            count: 0,
+            chatLog: []
+        };
+
+        bots.push(newBot);
+        saveToLocalStorage();
+        input.value = '';
+        renderBotList();
+    }
+
+    // Botの削除
+    function deleteBot(event, botId) {
+        event.stopPropagation(); // トーク画面への遷移（親クリック）を止める
+        if (!confirm("このフレンドと会話データを削除してもよろしいですか？（復元できません）")) return;
+
+        bots = bots.filter(b => b.id !== botId);
+        saveToLocalStorage();
+        renderBotList();
+    }
+
+    // Botの名前変更
+    function renameCurrentBot() {
+        const bot = bots.find(b => b.id === currentBotId);
+        if (!bot) return;
+
+        const newName = prompt("新しい名前を入力してください", bot.name);
+        if (newName && newName.trim()) {
+            bot.name = newName.trim();
+            document.getElementById('chatTitle').innerText = bot.name;
+            saveToLocalStorage();
+        }
+    }
+
+    // --- トーク画面の制御 ---
+    function openChat(botId) {
+        currentBotId = botId;
+        const bot = bots.find(b => b.id === botId);
+        if (!bot) return;
+
+        document.getElementById('chatTitle').innerText = bot.name;
+        
+        // チャット履歴の再描画
+        const history = document.getElementById('chatHistory');
+        history.innerHTML = '';
+
+        if (bot.chatLog.length === 0) {
+            // 初期状態のガイドメッセージ
+            history.innerHTML = `
+                <div class="message bot">
+                    <div class="chat-avatar">${bot.avatar}</div>
+                    <div class="bubble">こんにちは！あなたの言葉だけで学習する「${escapeHTML(bot.name)}」です。何か話しかけてね！</div>
+                    <div class="meta-info"><span class="time">${getNowTime()}</span></div>
+                </div>`;
+        } else {
+            bot.chatLog.forEach(msg => {
+                appendMessageDOM(msg.sender, msg.text, msg.time, bot.avatar);
+            });
+        }
+
+        switchView('chat');
+        setTimeout(() => { history.scrollTop = history.scrollHeight; }, 50);
+    }
+
+    function backToFriends() {
+        switchView('friends');
+    }
+
+    // --- マルコフ学習・生成（選択中のBotの器に流し込む） ---
+    function trainMarkov(bot, text) {
         const trimmed = text.trim();
-        if (trimmed.length < 3) return false; 
+        if (trimmed.length < 3) return;
 
         for (let i = 0; i < trimmed.length - 2; i++) {
             const key = trimmed.substring(i, i + 2);
             const nextChar = trimmed.charAt(i + 2);
 
             if (i === 0 || ['。', '\n', '！', '？', ' ', ' '].includes(trimmed.charAt(i - 1))) {
-                beginnings.push(key);
+                bot.beginnings.push(key);
             }
 
-            if (!dict[key]) {
-                dict[key] = [];
+            if (!bot.dict[key]) {
+                bot.dict[key] = [];
             }
-            dict[key].push(nextChar);
+            bot.dict[key].push(nextChar);
         }
-        learnedSentenceCount++;
-        return true;
+        bot.count++;
     }
 
-    // マルコフ連鎖による文章生成
-    function generateReply(userRawText) {
-        const keys = Object.keys(dict);
+    function generateReply(bot, userRawText) {
+        const keys = Object.keys(bot.dict);
 
-        let currentKey = beginnings.length > 0 
-            ? beginnings[Math.floor(Math.random() * beginnings.length)]
+        let currentKey = bot.beginnings.length > 0 
+            ? bot.beginnings[Math.floor(Math.random() * bot.beginnings.length)]
             : keys[Math.floor(Math.random() * keys.length)];
 
         let result = currentKey;
         const maxLen = Math.min(60, Math.floor(Math.random() * 20) + 10 + Math.floor(keys.length / 5));
 
         for (let i = 0; i < maxLen; i++) {
-            const nextChoices = dict[currentKey];
-            if (!nextChoices || nextChoices.length === 0) {
-                break; 
-            }
+            const nextChoices = bot.dict[currentKey];
+            if (!nextChoices || nextChoices.length === 0) break;
 
             const nextChar = nextChoices[Math.floor(Math.random() * nextChoices.length)];
             result += nextChar;
 
-            if (['。', '！', '？'].includes(nextChar) && i > 5) {
-                break;
-            }
-
+            if (['。', '！', '？'].includes(nextChar) && i > 5) break;
             currentKey = currentKey.charAt(1) + nextChar;
         }
         return result;
     }
 
-    // --- JSONエクスポート（脳みそ＋会話履歴） ---
-    function exportJSON() {
-        if (Object.keys(dict).length === 0 && chatLog.length === 0) {
-            alert("保存するデータがありません。");
-            return;
-        }
-
-        // 脳みそデータに加えて「chatLog」も一緒にパッキングする
-        const data = {
-            dict: dict,
-            beginnings: beginnings,
-            count: learnedSentenceCount,
-            chatLog: chatLog 
-        };
-
-        const jsonString = JSON.stringify(data, null, 2);
-        const blob = new Blob([jsonString], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        
-        const now = new Date();
-        const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
-        a.download = `markov_chat_archive_${dateStr}.json`;
-        
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    function triggerImport() {
-        document.getElementById('importFile').click();
-    }
-
-    // --- JSONインポート（脳みそ＋会話履歴の復元） ---
-    function importJSON(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                
-                if (data.dict && data.beginnings) {
-                    // 1. 脳みその復元
-                    dict = data.dict;
-                    beginnings = data.beginnings;
-                    learnedSentenceCount = data.count || 0;
-                    
-                    // 2. 会話ログデータの復元
-                    chatLog = data.chatLog || [];
-                    
-                    // 3. 画面上のトーク画面を完全にリセットして再描画
-                    const history = document.getElementById('chatHistory');
-                    history.innerHTML = ''; // 画面を真っ白にする
-
-                    if (chatLog.length === 0) {
-                        // もしログが空なら初期メッセージだけ戻す
-                        history.innerHTML = `
-                            <div class="message bot">
-                                <div class="bot-avatar">🤖</div>
-                                <div class="bubble">（過去の記憶をロードしました。おしゃべりを始めましょう！）</div>
-                                <div class="meta-info"><span class="time">${getNowTime()}</span></div>
-                            </div>`;
-                    } else {
-                        // 保存されていたログを1つずつ画面に流し込む
-                        chatLog.forEach(msg => {
-                            // 第4引数に保存されていた時間を渡して再現
-                            appendMessage(msg.sender, msg.text, false, msg.time);
-                        });
-                    }
-                    
-                    alert("会話履歴と記憶のインポートが完了しました！");
-                } else {
-                    alert("ファイル形式が正しくありません。");
-                }
-            } catch (err) {
-                alert("ファイルの読み込み中にエラーが発生しました。");
-            }
-        };
-        reader.readAsText(file);
-        event.target.value = '';
-    }
-
-    // 現在時刻の取得
-    function getNowTime() {
-        const now = new Date();
-        return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-    }
-    document.getElementById('initTime').innerText = getNowTime();
-
-    // メッセージ送信
+    // --- メッセージ送信まわり ---
     function sendMessage() {
+        const bot = bots.find(b => b.id === currentBotId);
         const inputEl = document.getElementById('userInput');
         const text = inputEl.value.trim();
-        if (!text) return;
+        if (!text || !bot) return;
 
-        appendMessage('user', text);
+        const timeStr = getNowTime();
+
+        // 1. ユーザー発言を画面に描画 ＆ ログに保存
+        appendMessageDOM('user', text, timeStr, bot.avatar);
+        bot.chatLog.push({ sender: 'user', text: text, time: timeStr });
         inputEl.value = '';
 
-        trainMarkov(text);
-        showTypingAndReply(text);
+        // 2. 学習
+        trainMarkov(bot, text);
+        saveToLocalStorage();
+
+        // 3. ボットのタイピング演出＆返信
+        const history = document.getElementById('chatHistory');
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'message bot';
+        typingDiv.innerHTML = `
+            <div class="chat-avatar">${bot.avatar}</div>
+            <div class="bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>
+        `;
+        history.appendChild(typingDiv);
+        history.scrollTop = history.scrollHeight;
+
+        setTimeout(() => {
+            typingDiv.remove();
+            
+            const replyText = generateReply(bot, text);
+            const botTime = getNowTime();
+            
+            appendMessageDOM('bot', replyText, botTime, bot.avatar);
+            bot.chatLog.push({ sender: 'bot', text: replyText, time: botTime });
+            
+            saveToLocalStorage();
+        }, Math.floor(Math.random() * 400) + 400);
+    }
+
+    // 画面にメッセージの泡を作る純粋な描画処理
+    function appendMessageDOM(sender, text, timeStr, avatar) {
+        const history = document.getElementById('chatHistory');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}`;
+
+        let innerHTML = '';
+        if (sender === 'bot') {
+            innerHTML += `<div class="chat-avatar">${avatar}</div>`;
+            innerHTML += `
+                <div class="bubble">${escapeHTML(text)}</div>
+                <div class="meta-info"><span class="time">${timeStr}</span></div>
+            `;
+        } else {
+            innerHTML += `
+                <div class="bubble">${escapeHTML(text)}</div>
+                <div class="meta-info">
+                    <span class="read-status">既読</span>
+                    <span class="time">${timeStr}</span>
+                </div>
+            `;
+        }
+
+        msgDiv.innerHTML = innerHTML;
+        history.appendChild(msgDiv);
+        history.scrollTop = history.scrollHeight;
     }
 
     function handleKeyDown(e) {
@@ -404,62 +626,59 @@
         }
     }
 
-    // メッセージ描画処理（ログ保存対応版）
-    // 第4引数（savedTime）がある場合は「過去ログの復元中」とみなす
-    function appendMessage(sender, text, isTyping = false, savedTime = null) {
-        const history = document.getElementById('chatHistory');
-        const timeStr = savedTime || getNowTime();
-
-        // 新しいメッセージ（タイピング中以外、かつ復元中ではない）なら配列に記録
-        if (!isTyping && !savedTime) {
-            chatLog.push({
-                sender: sender,
-                text: text,
-                time: timeStr
-            });
-        }
-
-        const msgDiv = document.createElement('div');
-        msgDiv.className = `message ${sender}`;
-
-        let innerHTML = '';
-        if (sender === 'bot') {
-            innerHTML += `<div class="bot-avatar">🤖</div>`;
-        }
-        
-        if (sender === 'user') {
-            innerHTML += `
-                <div class="bubble">${text}</div>
-                <div class="meta-info">
-                    <span class="read-status">既読</span>
-                    <span class="time">${timeStr}</span>
-                </div>
-            `;
-        } else {
-            innerHTML += `
-                <div class="bubble">${isTyping ? `<div class="typing-indicator"><span></span><span></span><span></span></div>` : text}</div>
-                <div class="meta-info">
-                    <span class="time">${timeStr}</span>
-                </div>
-            `;
-        }
-
-        msgDiv.innerHTML = innerHTML;
-        history.appendChild(msgDiv);
-        history.scrollTop = history.scrollHeight;
-
-        return msgDiv;
+    // --- 便利ユーティリティ ---
+    function getNowTime() {
+        const now = new Date();
+        return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
     }
 
-    function showTypingAndReply(userRawText) {
-        const typingBubble = appendMessage('bot', '', true);
-
-        setTimeout(() => {
-            typingBubble.remove();
-            const replyText = generateReply(userRawText);
-            appendMessage('bot', replyText);
-        }, Math.floor(Math.random() * 500) + 400);
+    function escapeHTML(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+
+    // --- バックアップ用JSON書き出し・インポート ---
+    function exportAllData() {
+        if (bots.length === 0) return alert("保存するデータがありません。");
+        const jsonString = JSON.stringify(bots, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `markov_friends_all.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function triggerImport() {
+        document.getElementById('importFile').click();
+    }
+
+    function importAllData(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (Array.isArray(data)) {
+                    bots = data;
+                    saveToLocalStorage();
+                    renderBotList();
+                    alert("すべてのフレンドと会話履歴を復元しました！");
+                } else {
+                    alert("正しいバックアップファイルではありません。");
+                }
+            } catch (err) {
+                alert("ファイルの読み込み中にエラーが発生しました。");
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    // 起動
+    window.onload = initApp;
 </script>
 
 </body>
