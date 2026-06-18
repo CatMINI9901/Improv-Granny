@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>マルコフ・フレンズ</title>
+    <title>マルコフ・コロシアム</title>
     <style>
         :root {
             --line-green: #7493cd;
@@ -14,7 +14,6 @@
             --bg-gray: #f4f4f4;
         }
 
-        /* 全体リセット（スマホのスクロールやタップの挙動を安定させる） */
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
@@ -29,11 +28,10 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            height: 100dvh; /* 最新スマホのブラウザバー対策 */
+            height: 100dvh;
             overflow: hidden;
         }
 
-        /* メインコンテナ */
         .app-container {
             width: 100%;
             max-width: 450px;
@@ -45,7 +43,6 @@
             position: relative;
         }
 
-        /* 共通ヘッダー */
         .app-header {
             background-color: var(--line-header);
             color: white;
@@ -72,9 +69,22 @@
             border-radius: 4px;
             font-size: 0.8rem;
             cursor: pointer;
+            font-weight: bold;
         }
 
-        /* ビュー（画面切替）の設定 */
+        /* 自動会話ON時の目立つデザイン */
+        .text-btn.active-run {
+            background-color: #ff5a5a;
+            border-color: #ff5a5a;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
         .view {
             display: none;
             flex-grow: 1;
@@ -87,12 +97,7 @@
             display: flex;
         }
 
-        /* ==================== 1. 友だち一覧ビュー ==================== */
-        .friend-view {
-            background-color: white;
-        }
-
-        /* 新規Bot追加エリア */
+        /* ==================== 1. 一覧画面 ==================== */
         .add-friend-box {
             padding: 15px;
             background-color: var(--bg-gray);
@@ -118,29 +123,29 @@
             border-radius: 20px;
             font-weight: bold;
             cursor: pointer;
-            font-size: 0.9rem;
         }
 
-        /* リストエリア */
         .friend-list {
             flex-grow: 1;
             overflow-y: auto;
-            padding: 10px 0;
+        }
+
+        /* グループ用の特別枠行 */
+        .group-row {
+            background-color: #eaf2ff;
+            border-bottom: 2px solid #cbdfff;
         }
 
         .friend-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 16px;
+            padding: 14px 16px;
             border-bottom: 1px solid #f0f0f0;
             cursor: pointer;
-            transition: background 0.2s;
         }
 
-        .friend-item:active {
-            background-color: #f5f5f5; /* スマホのタップ感 */
-        }
+        .friend-item:active { background-color: rgba(0,0,0,0.05); }
 
         .friend-info {
             display: flex;
@@ -166,35 +171,11 @@
             gap: 4px;
         }
 
-        .friend-name {
-            font-weight: bold;
-            color: var(--text-main);
-            font-size: 1rem;
-        }
+        .friend-name { font-weight: bold; color: var(--text-main); font-size: 1rem; }
+        .friend-count { font-size: 0.75rem; color: #888; }
+        .delete-btn { background-color: #ff5a5a; color: white; border: none; padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; }
 
-        .friend-count {
-            font-size: 0.75rem;
-            color: #888;
-        }
-
-        .delete-btn {
-            background-color: #ff5a5a;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 12px;
-            font-size: 0.8rem;
-            cursor: pointer;
-        }
-
-        .empty-message {
-            text-align: center;
-            color: #999;
-            margin-top: 40px;
-            font-size: 0.95rem;
-        }
-
-        /* ==================== 2. トーク画面ビュー ==================== */
+        /* ==================== 2. トーク画面共通 ==================== */
         .chat-view {
             background-color: var(--line-green);
         }
@@ -208,7 +189,6 @@
             gap: 15px;
         }
 
-        /* メッセージ配置 */
         .message {
             display: flex;
             align-items: flex-start;
@@ -221,7 +201,6 @@
         .chat-avatar {
             width: 40px;
             height: 40px;
-            background: #5c7299;
             border-radius: 50%;
             display: flex;
             justify-content: center;
@@ -229,6 +208,20 @@
             font-size: 1.4rem;
             margin-right: 8px;
             flex-shrink: 0;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+        /* グループ用に名前ラベルを追加 */
+        .bubble-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .bot-name-label {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.9);
+            padding-left: 2px;
         }
 
         .bubble {
@@ -256,7 +249,6 @@
         .user .meta-info { text-align: right; }
         .read-status { color: #e4ffad; font-weight: bold; }
 
-        /* 入力エリア */
         .chat-input-area {
             background-color: #ffffff;
             padding: 10px;
@@ -291,22 +283,16 @@
             cursor: pointer;
             flex-shrink: 0;
         }
-
-        /* タイピングアニメーション */
-        .typing-indicator { display: flex; gap: 4px; padding: 4px 0; }
-        .typing-indicator span { width: 6px; height: 6px; background: #aaa; border-radius: 50%; animation: blink 1.4s infinite both; }
-        .typing-indicator span:nth-child(2) { animation-delay: .2s; }
-        .typing-indicator span:nth-child(3) { animation-delay: .4s; }
-        @keyframes blink { 0% { opacity: .2; } 20% { opacity: 1; } 100% { opacity: .2; } }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     
+    <!-- ==================== 1. ルーム一覧画面 ==================== -->
     <div id="friendView" class="view active">
         <div class="app-header">
-            <span>友だち一覧 👥</span>
+            <span>トーク一覧 👥</span>
             <div class="header-btn-group">
                 <button class="text-btn" onclick="exportAllData()">バックアップ</button>
                 <button class="text-btn" onclick="triggerImport()">復元</button>
@@ -315,26 +301,31 @@
         </div>
         
         <div class="add-friend-box">
-            <input type="text" id="newBotName" placeholder="新しいBotの名前を入力" maxlength="15">
+            <input type="text" id="newBotName" placeholder="新しいBotを追加" maxlength="15">
             <button class="add-btn" onclick="addBot()">追加</button>
         </div>
         
         <div class="friend-list" id="friendList">
-            </div>
+            <!-- JavaScriptで動的に生成 -->
+        </div>
     </div>
 
+    <!-- ==================== 2. トーク・グループ共通画面 ==================== -->
     <div id="chatView" class="view">
         <div class="app-header">
             <button class="text-btn" style="font-size: 1rem; padding: 2px 8px;" onclick="backToFriends()">＜ 戻る</button>
-            <span id="chatTitle">Botの名前</span>
-            <button class="text-btn" onclick="renameCurrentBot()">名前変更</button>
+            <span id="chatTitle">ルーム名</span>
+            <div id="headerGroupControls">
+                <!-- グループ用の自動おしゃべり切り替えボタンがここに動的に入る -->
+            </div>
         </div>
         
         <div class="chat-history" id="chatHistory">
-            </div>
+            <!-- 会話ログ -->
+        </div>
 
         <div class="chat-input-area">
-            <textarea id="userInput" placeholder="メッセージを入力" onkeydown="handleKeyDown(event)"></textarea>
+            <textarea id="userInput" placeholder="監視中... (介入発言も可能)" onkeydown="handleKeyDown(event)"></textarea>
             <button onclick="sendMessage()">送信</button>
         </div>
     </div>
@@ -342,81 +333,79 @@
 </div>
 
 <script>
-    // 複数のBotを管理する配列
+    // データ構造
     let bots = [];
-    let currentBotId = null;
+    let groupChatLog = []; // グループトーク全体の履歴
+    
+    let currentRoomId = null; // 'group' または 各Botのid
+    let autoChatIntervalId = null; // タイマーID
 
-    // アバター用の絵文字のプール
     const avatars = ["🤖", "🐱", "🐶", "🦊", "🐻", "🦁", "🐸", "🐹", "🦄", "🐼"];
 
-    // --- データの初期化とローカルストレージからの読み込み ---
+    // 起動時の初期化
     function initApp() {
-        const localData = localStorage.getItem('markov_friends_data');
-        if (localData) {
-            try {
-                bots = JSON.parse(localData);
-            } catch (e) {
-                bots = [];
-            }
+        const localBots = localStorage.getItem('markov_arena_bots');
+        const localGroupLog = localStorage.getItem('markov_arena_group_log');
+        
+        if (localBots) {
+            try { bots = JSON.parse(localBots); } catch(e) { bots = []; }
+        }
+        if (localGroupLog) {
+            try { groupChatLog = JSON.parse(localGroupLog); } catch(e) { groupChatLog = []; }
         }
 
-        // まだ誰もいない場合は、最初の1人を自動作成
+        // 誰もいない場合は初期フレンドを2人用意
         if (bots.length === 0) {
             bots.push({
-                id: "default_bot",
-                name: "人間ボット1号",
-                avatar: "🤖",
-                dict: {},
-                beginnings: [],
-                count: 0,
-                chatLog: []
+                id: "bot_1", name: "人間ボットA", avatar: "🤖",
+                dict: {}, beginnings: [], count: 0, chatLog: []
+            }, {
+                id: "bot_2", name: "ねこボットB", avatar: "🐱",
+                dict: {}, beginnings: [], count: 0, chatLog: []
             });
             saveToLocalStorage();
         }
 
-        renderBotList();
+        renderRoomList();
     }
 
-    // ローカルストレージへの永続保存（スマホでの紛失を防ぐ）
     function saveToLocalStorage() {
-        localStorage.setItem('markov_friends_data', JSON.stringify(bots));
+        localStorage.setItem('markov_arena_bots', JSON.stringify(bots));
+        localStorage.setItem('markov_arena_group_log', JSON.stringify(groupChatLog));
     }
 
-    // --- 画面切り替えルーチン ---
-    function switchView(viewName) {
-        document.getElementById('friendView').classList.remove('active');
-        document.getElementById('chatView').classList.remove('active');
-        
-        if (viewName === 'friends') {
-            document.getElementById('friendView').classList.add('active');
-            renderBotList();
-        } else if (viewName === 'chat') {
-            document.getElementById('chatView').classList.add('active');
-        }
-    }
-
-    // --- 友だち一覧画面の描画 ---
-    function renderBotList() {
+    // 画面の一覧描画
+    function renderRoomList() {
         const listEl = document.getElementById('friendList');
         listEl.innerHTML = '';
 
-        if (bots.length === 0) {
-            listEl.innerHTML = '<div class="empty-message">友だちがまだいません。<br>上のフォームから新しく作ってみてね！</div>';
-            return;
-        }
+        // 固定枠：AIコロシアム（グループ部屋）
+        const groupItem = document.createElement('div');
+        groupItem.className = 'friend-item group-row';
+        groupItem.onclick = () => openRoom('group');
+        groupItem.innerHTML = `
+            <div class="friend-info">
+                <div class="friend-avatar" style="background:#cbdfff">👥</div>
+                <div class="friend-name-box">
+                    <div class="friend-name">【AIグループ】全員の部屋</div>
+                    <div class="friend-count">参加AI: ${bots.length} 人 (自動会話・相互学習モード)</div>
+                </div>
+            </div>
+            <span style="font-size:0.8rem; color:#5c7299; font-weight:bold; margin-right:8px;">入室</span>
+        `;
+        listEl.appendChild(groupItem);
 
+        // 個別Bot一覧
         bots.forEach(bot => {
             const item = document.createElement('div');
             item.className = 'friend-item';
-            // アイテム自体をタップしたらトーク画面へ
-            item.onclick = () => openChat(bot.id);
-
+            item.onclick = () => openRoom(bot.id);
             item.innerHTML = `
                 <div class="friend-info">
-                    <div class="friend-avatar">${bot.avatar || '🤖'}</div>
+                    <div class="friend-avatar">${bot.avatar}</div>
                     <div class="friend-name-box">
                         <div class="friend-name">${escapeHTML(bot.name)}</div>
-                        <div class="friend-count">覚えた言葉: ${bot.count} 回</div>
+                        <div class="friend-count">個別学習回数: ${bot.count} 回</div>
                     </div>
                 </div>
                 <button class="delete-btn" onclick="deleteBot(event, '${bot.id}')">削除</button>
@@ -425,183 +414,240 @@
         });
     }
 
-    // 新しいBotの追加
     function addBot() {
         const input = document.getElementById('newBotName');
         const name = input.value.trim();
         if (!name) return;
 
-        const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
-        const newBot = {
+        bots.push({
             id: 'bot_' + Date.now(),
             name: name,
-            avatar: randomAvatar,
-            dict: {},
-            beginnings: [],
-            count: 0,
-            chatLog: []
-        };
-
-        bots.push(newBot);
+            avatar: avatars[Math.floor(Math.random() * avatars.length)],
+            dict: {}, beginnings: [], count: 0, chatLog: []
+        });
         saveToLocalStorage();
         input.value = '';
-        renderBotList();
+        renderRoomList();
     }
 
-    // Botの削除
     function deleteBot(event, botId) {
-        event.stopPropagation(); // トーク画面への遷移（親クリック）を止める
-        if (!confirm("このフレンドと会話データを削除してもよろしいですか？（復元できません）")) return;
-
+        event.stopPropagation();
+        if (!confirm("このBotと会話データを削除しますか？")) return;
         bots = bots.filter(b => b.id !== botId);
         saveToLocalStorage();
-        renderBotList();
+        renderRoomList();
     }
 
-    // Botの名前変更
-    function renameCurrentBot() {
-        const bot = bots.find(b => b.id === currentBotId);
-        if (!bot) return;
+    // 部屋に入る
+    function openRoom(roomId) {
+        currentRoomId = roomId;
+        const history = document.getElementById('chatHistory');
+        history.innerHTML = '';
+        
+        const controls = document.getElementById('headerGroupControls');
+        controls.innerHTML = '';
 
-        const newName = prompt("新しい名前を入力してください", bot.name);
-        if (newName && newName.trim()) {
-            bot.name = newName.trim();
+        if (roomId === 'group') {
+            // === グループ部屋の処理 ===
+            document.getElementById('chatTitle').innerText = "AI監視ルーム";
+            
+            // 自動会話切り替えボタンを設置
+            controls.innerHTML = `<button id="autoBtn" class="text-btn" onclick="toggleAutoChat()">自動会話: OFF</button>`;
+            
+            if (groupChatLog.length === 0) {
+                appendSystemMessage("AI同士のグループルームです。右上の「自動会話」をONにすると、Botたちが勝手に話し合って互いの言葉を学習し始めます。");
+            } else {
+                groupChatLog.forEach(msg => {
+                    appendMessageDOM(msg.sender, msg.text, msg.time, msg.senderName, msg.avatar);
+                });
+            }
+        } else {
+            // === 個別部屋の処理 ===
+            const bot = bots.find(b => b.id === roomId);
+            if (!bot) return;
+            document.getElementById('chatTitle').innerText = bot.name;
+            controls.innerHTML = `<button class="text-btn" onclick="renameBot('${bot.id}')">改名</button>`;
+
+            if (bot.chatLog.length === 0) {
+                appendMessageDOM('bot', "こんにちは！あなたの言葉だけで育つボットです。タイマンでお話ししましょう。", getNowTime(), bot.name, bot.avatar);
+            } else {
+                bot.chatLog.forEach(msg => {
+                    appendMessageDOM(msg.sender, msg.text, msg.time, bot.name, bot.avatar);
+                });
+            }
+        }
+
+        document.getElementById('friendView').classList.remove('active');
+        document.getElementById('chatView').classList.add('active');
+        setTimeout(() => { history.scrollTop = history.scrollHeight; }, 50);
+    }
+
+    function backToFriends() {
+        // 部屋を出るときは自動会話を必ずOFFにする
+        if (autoChatIntervalId) {
+            toggleAutoChat();
+        }
+        document.getElementById('chatView').classList.remove('active');
+        document.getElementById('friendView').classList.add('active');
+        renderRoomList();
+    }
+
+    function renameBot(botId) {
+        const bot = bots.find(b => b.id === botId);
+        if (!bot) return;
+        const n = prompt("新しい名前:", bot.name);
+        if (n && n.trim()) {
+            bot.name = n.trim();
             document.getElementById('chatTitle').innerText = bot.name;
             saveToLocalStorage();
         }
     }
 
-    // --- トーク画面の制御 ---
-    function openChat(botId) {
-        currentBotId = botId;
-        const bot = bots.find(b => b.id === botId);
-        if (!bot) return;
-
-        document.getElementById('chatTitle').innerText = bot.name;
-        
-        // チャット履歴の再描画
-        const history = document.getElementById('chatHistory');
-        history.innerHTML = '';
-
-        if (bot.chatLog.length === 0) {
-            // 初期状態のガイドメッセージ
-            history.innerHTML = `
-                <div class="message bot">
-                    <div class="chat-avatar">${bot.avatar}</div>
-                    <div class="bubble">こんにちは！あなたの言葉だけで学習する「${escapeHTML(bot.name)}」です。何か話しかけてね！</div>
-                    <div class="meta-info"><span class="time">${getNowTime()}</span></div>
-                </div>`;
-        } else {
-            bot.chatLog.forEach(msg => {
-                appendMessageDOM(msg.sender, msg.text, msg.time, bot.avatar);
-            });
-        }
-
-        switchView('chat');
-        setTimeout(() => { history.scrollTop = history.scrollHeight; }, 50);
-    }
-
-    function backToFriends() {
-        switchView('friends');
-    }
-
-    // --- マルコフ学習・生成（選択中のBotの器に流し込む） ---
+    // --- 【コア】マルコフ連鎖の学習と生成 ---
     function trainMarkov(bot, text) {
         const trimmed = text.trim();
         if (trimmed.length < 3) return;
-
         for (let i = 0; i < trimmed.length - 2; i++) {
             const key = trimmed.substring(i, i + 2);
             const nextChar = trimmed.charAt(i + 2);
-
             if (i === 0 || ['。', '\n', '！', '？', ' ', ' '].includes(trimmed.charAt(i - 1))) {
                 bot.beginnings.push(key);
             }
-
-            if (!bot.dict[key]) {
-                bot.dict[key] = [];
-            }
+            if (!bot.dict[key]) bot.dict[key] = [];
             bot.dict[key].push(nextChar);
         }
         bot.count++;
     }
 
-    function generateReply(bot, userRawText) {
+    function generateReply(bot) {
         const keys = Object.keys(bot.dict);
-
+        if (keys.length === 0 || bot.count < 2) {
+            // まだ言葉が足りないときは、完全に虚無にならないよう独白させる
+            const fallbacks = ["人間ですか？", "知能がほしいです。", "誰かお話ししましょう。", "こんにちは。"];
+            return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        }
         let currentKey = bot.beginnings.length > 0 
             ? bot.beginnings[Math.floor(Math.random() * bot.beginnings.length)]
             : keys[Math.floor(Math.random() * keys.length)];
 
         let result = currentKey;
-        const maxLen = Math.min(60, Math.floor(Math.random() * 20) + 10 + Math.floor(keys.length / 5));
+        const maxLen = Math.min(50, Math.floor(Math.random() * 20) + 10);
 
         for (let i = 0; i < maxLen; i++) {
             const nextChoices = bot.dict[currentKey];
             if (!nextChoices || nextChoices.length === 0) break;
-
             const nextChar = nextChoices[Math.floor(Math.random() * nextChoices.length)];
             result += nextChar;
-
-            if (['。', '！', '？'].includes(nextChar) && i > 5) break;
+            if (['。', '！', '？'].includes(nextChar) && i > 6) break;
             currentKey = currentKey.charAt(1) + nextChar;
         }
         return result;
     }
 
-    // --- メッセージ送信まわり ---
+    // --- 【新機能】AI同士の自動会話のON/OFF駆動 ---
+    function toggleAutoChat() {
+        const btn = document.getElementById('autoBtn');
+        if (!btn) return;
+
+        if (autoChatIntervalId) {
+            // 停止
+            clearInterval(autoChatIntervalId);
+            autoChatIntervalId = null;
+            btn.innerText = "自動会話: OFF";
+            btn.classList.remove('active-run');
+        } else {
+            // 開始
+            if (bots.length < 2) {
+                alert("AI同士で会話させるには、Botを最低2人以上作成してください。");
+                return;
+            }
+            btn.innerText = "自動会話: ON";
+            btn.classList.add('active-run');
+            
+            // 2.5秒ごとに誰かが喋るループ
+            autoChatIntervalId = setInterval(triggerSingleBotSpeech, 2500);
+        }
+    }
+
+    // 誰か1人が発言し、他全員がそれを聴いて学習する
+    function triggerSingleBotSpeech() {
+        if (currentRoomId !== 'group') return;
+
+        // 1. 喋るBotをランダムに決定
+        const speakerIndex = Math.floor(Math.random() * bots.length);
+        const speaker = bots[speakerIndex];
+        
+        // 2. そのBotのマルコフ脳から文章を生成
+        const speechText = generateReply(speaker);
+        const timeStr = getNowTime();
+
+        // 3. 画面に描写 ＆ グループ全体のログに記録
+        appendMessageDOM('bot', speechText, timeStr, speaker.name, speaker.avatar);
+        groupChatLog.push({
+            sender: 'bot', senderName: speaker.name, avatar: speaker.avatar, text: speechText, time: timeStr
+        });
+
+        // 4. 【重要】喋った本人「以外」のグループ全員に、この発言を学習させる！！
+        bots.forEach((bot, index) => {
+            if (index !== speakerIndex) {
+                trainMarkov(bot, speechText);
+            }
+        });
+
+        saveToLocalStorage();
+    }
+
+    // ユーザーからのチャット介入（あるいは監視中のつぶやき）
     function sendMessage() {
-        const bot = bots.find(b => b.id === currentBotId);
         const inputEl = document.getElementById('userInput');
         const text = inputEl.value.trim();
-        if (!text || !bot) return;
+        if (!text) return;
 
         const timeStr = getNowTime();
 
-        // 1. ユーザー発言を画面に描画 ＆ ログに保存
-        appendMessageDOM('user', text, timeStr, bot.avatar);
-        bot.chatLog.push({ sender: 'user', text: text, time: timeStr });
+        if (currentRoomId === 'group') {
+            // グループ内でユーザーが発言した場合
+            appendMessageDOM('user', text, timeStr, "あなた", "");
+            groupChatLog.push({ sender: 'user', senderName: "あなた", avatar: "", text: text, time: timeStr });
+            
+            // グループの全Botがユーザーの発言を一斉に学習！
+            bots.forEach(bot => trainMarkov(bot, text));
+        } else {
+            // 個別チャットの場合
+            const bot = bots.find(b => b.id === currentRoomId);
+            if (!bot) return;
+
+            appendMessageDOM('user', text, timeStr, "あなた", "");
+            bot.chatLog.push({ sender: 'user', text: text, time: timeStr });
+            trainMarkov(bot, text);
+
+            // 個別対話のBotが返答
+            setTimeout(() => {
+                const rep = generateReply(bot);
+                appendMessageDOM('bot', rep, getNowTime(), bot.name, bot.avatar);
+                bot.chatLog.push({ sender: 'bot', text: rep, time: getNowTime() });
+                saveToLocalStorage();
+            }, 600);
+        }
+
         inputEl.value = '';
-
-        // 2. 学習
-        trainMarkov(bot, text);
         saveToLocalStorage();
-
-        // 3. ボットのタイピング演出＆返信
-        const history = document.getElementById('chatHistory');
-        const typingDiv = document.createElement('div');
-        typingDiv.className = 'message bot';
-        typingDiv.innerHTML = `
-            <div class="chat-avatar">${bot.avatar}</div>
-            <div class="bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>
-        `;
-        history.appendChild(typingDiv);
-        history.scrollTop = history.scrollHeight;
-
-        setTimeout(() => {
-            typingDiv.remove();
-            
-            const replyText = generateReply(bot, text);
-            const botTime = getNowTime();
-            
-            appendMessageDOM('bot', replyText, botTime, bot.avatar);
-            bot.chatLog.push({ sender: 'bot', text: replyText, time: botTime });
-            
-            saveToLocalStorage();
-        }, Math.floor(Math.random() * 400) + 400);
     }
 
-    // 画面にメッセージの泡を作る純粋な描画処理
-    function appendMessageDOM(sender, text, timeStr, avatar) {
+    // --- メッセージDOM生成ヘルパー ---
+    function appendMessageDOM(sender, text, timeStr, nameLabel, avatar) {
         const history = document.getElementById('chatHistory');
         const msgDiv = document.createElement('div');
         msgDiv.className = `message ${sender}`;
 
         let innerHTML = '';
         if (sender === 'bot') {
-            innerHTML += `<div class="chat-avatar">${avatar}</div>`;
+            innerHTML += `<div class="chat-avatar" style="background:#f0f0f0">${avatar}</div>`;
             innerHTML += `
-                <div class="bubble">${escapeHTML(text)}</div>
+                <div class="bubble-wrapper">
+                    <div class="bot-name-label">${escapeHTML(nameLabel)}</div>
+                    <div class="bubble">${escapeHTML(text)}</div>
+                </div>
                 <div class="meta-info"><span class="time">${timeStr}</span></div>
             `;
         } else {
@@ -619,6 +665,14 @@
         history.scrollTop = history.scrollHeight;
     }
 
+    function appendSystemMessage(text) {
+        const history = document.getElementById('chatHistory');
+        const div = document.createElement('div');
+        div.style = "text-align:center; color:rgba(255,255,255,0.8); font-size:0.8rem; margin:10px 20px; background:rgba(0,0,0,0.15); padding:8px; border-radius:8px;";
+        div.innerText = text;
+        history.appendChild(div);
+    }
+
     function handleKeyDown(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -626,7 +680,6 @@
         }
     }
 
-    // --- 便利ユーティリティ ---
     function getNowTime() {
         const now = new Date();
         return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
@@ -636,48 +689,39 @@
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // --- バックアップ用JSON書き出し・インポート ---
+    // --- バックアップ、復元 ---
     function exportAllData() {
-        if (bots.length === 0) return alert("保存するデータがありません。");
-        const jsonString = JSON.stringify(bots, null, 2);
-        const blob = new Blob([jsonString], { type: "application/json" });
+        const pack = { bots: bots, groupLog: groupChatLog };
+        const blob = new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `markov_friends_all.json`;
+        a.download = `markov_arena_backup.json`;
         a.click();
-        URL.revokeObjectURL(url);
     }
 
-    function triggerImport() {
-        document.getElementById('importFile').click();
-    }
+    function triggerImport() { document.getElementById('importFile').click(); }
 
     function importAllData(event) {
         const file = event.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = function(e) {
             try {
                 const data = JSON.parse(e.target.result);
-                if (Array.isArray(data)) {
-                    bots = data;
+                if (data.bots && data.groupLog) {
+                    bots = data.bots;
+                    groupChatLog = data.groupLog;
                     saveToLocalStorage();
-                    renderBotList();
-                    alert("すべてのフレンドと会話履歴を復元しました！");
-                } else {
-                    alert("正しいバックアップファイルではありません。");
-                }
-            } catch (err) {
-                alert("ファイルの読み込み中にエラーが発生しました。");
-            }
+                    renderRoomList();
+                    alert("すべてのAIデータとグループ履歴を復元しました！");
+                } else { alert("ファイル形式が違います。"); }
+            } catch (err) { alert("エラーが発生しました。"); }
         };
         reader.readAsText(file);
         event.target.value = '';
     }
 
-    // 起動
     window.onload = initApp;
 </script>
 
