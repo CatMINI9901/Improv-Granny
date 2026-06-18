@@ -3,201 +3,464 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>即興ばばぁ - 最強の降臨 -</title>
+    <title>純粋培養マルコフ・トーク（履歴も完全保存版）</title>
     <style>
         :root {
-            --primary: #e63946;
-            --dark: #1d3557;
-            --light: #f1faee;
-            --accent: #ffb703;
+            --line-green: #7493cd;
+            --line-header: #2b364a;
+            --my-bubble: #85e249;
+            --bot-bubble: #ffffff;
+            --text-main: #333333;
         }
 
         body {
-            font-family: serif;
-            background-color: var(--dark);
-            color: var(--light);
             margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            background-color: #f0f0f0;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        header {
-            text-align: center;
-            padding: 20px;
-            border-bottom: 4px double var(--accent);
-            width: 100%;
-        }
-
-        h1 {
-            font-size: 3rem;
-            margin: 0;
-            color: var(--accent);
-            text-shadow: 3px 3px 0px #000;
-        }
-
-        #game-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
             justify-content: center;
             align-items: center;
-            width: 90%;
-            max-width: 600px;
-            gap: 20px;
+            height: 100vh;
         }
 
-        /* 召喚エリア */
-        #display-area {
-            background: rgba(255,255,255,0.1);
-            border: 2px solid var(--accent);
-            border-radius: 15px;
-            padding: 40px 20px;
+        .chat-container {
             width: 100%;
-            text-align: center;
-            min-height: 200px;
+            max-width: 450px;
+            height: 100vh;
+            background-color: var(--line-green);
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            box-shadow: 0 0 20px rgba(255,183,3,0.3);
-            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
         }
 
-        .baba-name {
-            font-size: 2.2rem;
-            font-weight: bold;
-            margin-bottom: 10px;
-            line-height: 1.2;
-        }
-
-        .baba-title {
-            font-size: 1.4rem;
-            color: var(--accent);
-            font-style: italic;
-        }
-
-        /* 操作エリア */
-        .controls {
-            display: flex;
-            gap: 15px;
-            width: 100%;
-        }
-
-        button {
-            flex: 1;
+        .chat-header {
+            background-color: var(--line-header);
+            color: white;
             padding: 15px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .header-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .header-btn {
+            background: none;
+            border: 1px solid #ffffff66;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .chat-history {
+            flex-grow: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-start;
+            max-width: 85%;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+        }
+
+        .bot-avatar {
+            width: 40px;
+            height: 40px;
+            background: #5c7299;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.4rem;
+            margin-right: 8px;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .bubble {
+            padding: 10px 14px;
+            border-radius: 15px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            word-break: break-all;
+            white-space: pre-wrap;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .bot .bubble {
+            background-color: var(--bot-bubble);
+            color: var(--text-main);
+            border-top-left-radius: 2px;
+        }
+
+        .user .bubble {
+            background-color: var(--my-bubble);
+            color: var(--text-main);
+            border-top-right-radius: 2px;
+        }
+
+        .meta-info {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            font-size: 0.7rem;
+            color: #ffffffcc;
+            margin: 0 5px;
+            min-width: 35px;
+        }
+
+        .user .meta-info {
+            text-align: right;
+        }
+
+        .read-status {
+            color: #e4ffad;
+            font-weight: bold;
+        }
+
+        .chat-input-area {
+            background-color: #ffffff;
+            padding: 10px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input-area textarea {
+            flex-grow: 1;
+            height: 36px;
+            border: 1px solid #ccc;
+            border-radius: 18px;
+            padding: 8px 15px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+            resize: none;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .chat-input-area button {
+            background-color: #5c7299;
+            color: white;
+            border: none;
+            width: 50px;
+            height: 36px;
+            border-radius: 18px;
             font-weight: bold;
             cursor: pointer;
-            border: none;
-            border-radius: 50px;
-            transition: transform 0.1s, background-color 0.2s;
         }
 
-        #summon-btn {
-            background-color: var(--primary);
-            color: white;
-            box-shadow: 0 5px 0 #900;
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 4px 0;
         }
-
-        #summon-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 1px 0 #900;
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background: #aaa;
+            border-radius: 50%;
+            animation: blink 1.4s infinite both;
         }
-
-        /* アニメーション用クラス */
-        .flash {
-            animation: flash-anim 0.5s ease-out;
-        }
-
-        @keyframes flash-anim {
-            0% { background-color: #fff; transform: scale(1.05); }
-            100% { background-color: rgba(255,255,255,0.1); transform: scale(1); }
-        }
-
-        footer {
-            padding: 20px;
-            font-size: 0.8rem;
-            opacity: 0.7;
+        .typing-indicator span:nth-child(2) { animation-delay: .2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: .4s; }
+        @keyframes blink {
+            0% { opacity: .2; }
+            20% { opacity: 1; }
+            100% { opacity: .2; }
         }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>即興ばばぁ</h1>
-        <p>〜 75種類の欠片から最強を創れ 〜</p>
-    </header>
-
-    <main id="game-container">
-        <div id="display-area">
-            <div id="result">
-                <p style="opacity: 0.5;">「召喚」を押して最強を顕現させよ</p>
-            </div>
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="header-title">記憶ゼロのボット 🤖</div>
+        <div class="header-btns">
+            <button class="header-btn" onclick="exportJSON()">保存</button>
+            <button class="header-btn" onclick="triggerImport()">読込</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
         </div>
+    </div>
 
-        <div class="controls">
-            <button id="summon-btn" onclick="summonBaba()">最強のばばぁを召喚！</button>
+    <div class="chat-history" id="chatHistory">
+        <!-- 初期メッセージ -->
+        <div class="message bot" id="initMessage">
+            <div class="bot-avatar">🤖</div>
+            <div class="bubble">私はまだ何も言葉を知りません。あなたが送信した言葉だけで学習します。何か話しかけてみてください！</div>
+            <div class="meta-info"><span class="time" id="initTime">00:00</span></div>
         </div>
-    </main>
+    </div>
 
-    <footer>
-        &copy; 2026 即興ばばぁ製作委員会
-    </footer>
+    <div class="chat-input-area">
+        <textarea id="userInput" placeholder="メッセージを入力" onkeydown="handleKeyDown(event)"></textarea>
+        <button onclick="sendMessage()">送信</button>
+    </div>
+</div>
 
-    <script>
-        // カードデータ（全75種類：25枚 × 3カテゴリ）
-        const deck = {
-            surnames: [
-                "鬼龍院", "剛田", "破滅", "聖崎", "薔薇一", "煉獄", "獅子王", "不動", 
-                "震電", "巌", "毒島", "鳳凰", "卍谷", "鉄扇", "龍崎", "冥土", 
-                "轟", "凱旋", "乾坤", "絶海", "獅子神", "虎杖", "鬼瓦", "皇", "終焉"
-            ],
-            names: [
-                "トメ", "ゴリ恵", "雅", "獄姫", "カツ", "乱", "零", "志津", 
-                "蕾", "彪", "幻", "薫", "刃", "巌子", "烈", "蝶", 
-                "命", "創", "終", "極", "魁", "猛", "煌", "侘", "鋼"
-            ],
-            titles: [
-                "PCに詳しい", "重力をお手玉する", "Wi-Fiを素手で掴む", "音速で漬物を漬ける", 
-                "戦場で編み物をする", "核シェルターを自作した", "サバゲーで無双する", 
-                "国家予算を飴玉で動かす", "黒魔術で腰痛を治す", "ASMRで孫を眠らせる",
-                "キーボードを親指一本で砕く", "5G電波と交信する", "マッハ3でゲートボールする",
-                "素手でクマを黙らせる", "暗号資産をソロバンで管理する", "AIの悩み相談に乗る",
-                "宇宙から盆栽を眺める", "1ビットの狂いもなく刺繍する", "戦車をデコる",
-                "ドローンをカラスと間違えて捕まえる", "VR世界で町内会を仕切る",
-                "火炎放射器でサンマを焼く", "深海6000mで茶をしばく", "衛星軌道上から孫を見守る",
-                "歴史を裏から操る"
-            ]
+<script>
+    let dict = {};
+    let beginnings = [];
+    let learnedSentenceCount = 0;
+    
+    // 【新設】画面上の会話履歴を記憶しておくための配列
+    let chatLog = [];
+
+    // マルコフ連鎖の学習処理
+    function trainMarkov(text) {
+        const trimmed = text.trim();
+        if (trimmed.length < 3) return false; 
+
+        for (let i = 0; i < trimmed.length - 2; i++) {
+            const key = trimmed.substring(i, i + 2);
+            const nextChar = trimmed.charAt(i + 2);
+
+            if (i === 0 || ['。', '\n', '！', '？', ' ', ' '].includes(trimmed.charAt(i - 1))) {
+                beginnings.push(key);
+            }
+
+            if (!dict[key]) {
+                dict[key] = [];
+            }
+            dict[key].push(nextChar);
+        }
+        learnedSentenceCount++;
+        return true;
+    }
+
+    // マルコフ連鎖による文章生成
+    function generateReply(userRawText) {
+        const keys = Object.keys(dict);
+
+        let currentKey = beginnings.length > 0 
+            ? beginnings[Math.floor(Math.random() * beginnings.length)]
+            : keys[Math.floor(Math.random() * keys.length)];
+
+        let result = currentKey;
+        const maxLen = Math.min(60, Math.floor(Math.random() * 20) + 10 + Math.floor(keys.length / 5));
+
+        for (let i = 0; i < maxLen; i++) {
+            const nextChoices = dict[currentKey];
+            if (!nextChoices || nextChoices.length === 0) {
+                break; 
+            }
+
+            const nextChar = nextChoices[Math.floor(Math.random() * nextChoices.length)];
+            result += nextChar;
+
+            if (['。', '！', '？'].includes(nextChar) && i > 5) {
+                break;
+            }
+
+            currentKey = currentKey.charAt(1) + nextChar;
+        }
+        return result;
+    }
+
+    // --- JSONエクスポート（脳みそ＋会話履歴） ---
+    function exportJSON() {
+        if (Object.keys(dict).length === 0 && chatLog.length === 0) {
+            alert("保存するデータがありません。");
+            return;
+        }
+
+        // 脳みそデータに加えて「chatLog」も一緒にパッキングする
+        const data = {
+            dict: dict,
+            beginnings: beginnings,
+            count: learnedSentenceCount,
+            chatLog: chatLog 
         };
 
-        function getRandom(array) {
-            return array[Math.floor(Math.random() * array.length)];
+        const jsonString = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        
+        const now = new Date();
+        const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+        a.download = `markov_chat_archive_${dateStr}.json`;
+        
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    function triggerImport() {
+        document.getElementById('importFile').click();
+    }
+
+    // --- JSONインポート（脳みそ＋会話履歴の復元） ---
+    function importJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                
+                if (data.dict && data.beginnings) {
+                    // 1. 脳みその復元
+                    dict = data.dict;
+                    beginnings = data.beginnings;
+                    learnedSentenceCount = data.count || 0;
+                    
+                    // 2. 会話ログデータの復元
+                    chatLog = data.chatLog || [];
+                    
+                    // 3. 画面上のトーク画面を完全にリセットして再描画
+                    const history = document.getElementById('chatHistory');
+                    history.innerHTML = ''; // 画面を真っ白にする
+
+                    if (chatLog.length === 0) {
+                        // もしログが空なら初期メッセージだけ戻す
+                        history.innerHTML = `
+                            <div class="message bot">
+                                <div class="bot-avatar">🤖</div>
+                                <div class="bubble">（過去の記憶をロードしました。おしゃべりを始めましょう！）</div>
+                                <div class="meta-info"><span class="time">${getNowTime()}</span></div>
+                            </div>`;
+                    } else {
+                        // 保存されていたログを1つずつ画面に流し込む
+                        chatLog.forEach(msg => {
+                            // 第4引数に保存されていた時間を渡して再現
+                            appendMessage(msg.sender, msg.text, false, msg.time);
+                        });
+                    }
+                    
+                    alert("会話履歴と記憶のインポートが完了しました！");
+                } else {
+                    alert("ファイル形式が正しくありません。");
+                }
+            } catch (err) {
+                alert("ファイルの読み込み中にエラーが発生しました。");
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    }
+
+    // 現在時刻の取得
+    function getNowTime() {
+        const now = new Date();
+        return now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+    }
+    document.getElementById('initTime').innerText = getNowTime();
+
+    // メッセージ送信
+    function sendMessage() {
+        const inputEl = document.getElementById('userInput');
+        const text = inputEl.value.trim();
+        if (!text) return;
+
+        appendMessage('user', text);
+        inputEl.value = '';
+
+        trainMarkov(text);
+        showTypingAndReply(text);
+    }
+
+    function handleKeyDown(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    }
+
+    // メッセージ描画処理（ログ保存対応版）
+    // 第4引数（savedTime）がある場合は「過去ログの復元中」とみなす
+    function appendMessage(sender, text, isTyping = false, savedTime = null) {
+        const history = document.getElementById('chatHistory');
+        const timeStr = savedTime || getNowTime();
+
+        // 新しいメッセージ（タイピング中以外、かつ復元中ではない）なら配列に記録
+        if (!isTyping && !savedTime) {
+            chatLog.push({
+                sender: sender,
+                text: text,
+                time: timeStr
+            });
         }
 
-        function summonBaba() {
-            const display = document.getElementById('display-area');
-            const result = document.getElementById('result');
-            
-            // アニメーション用
-            display.classList.remove('flash');
-            void display.offsetWidth; // リフロー発生
-            display.classList.add('flash');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender}`;
 
-            // ランダムに選出
-            const s = getRandom(deck.surnames);
-            const n = getRandom(deck.names);
-            const t = getRandom(deck.titles);
-            const age = 70 + Math.floor(Math.random() * 30); // 70~99歳
-
-            // 表示更新
-            result.innerHTML = `
-                <div class="baba-name">${s} ${n}（${age}歳）</div>
-                <div class="baba-title">〜 ${t}ばばぁ 〜</div>
+        let innerHTML = '';
+        if (sender === 'bot') {
+            innerHTML += `<div class="bot-avatar">🤖</div>`;
+        }
+        
+        if (sender === 'user') {
+            innerHTML += `
+                <div class="bubble">${text}</div>
+                <div class="meta-info">
+                    <span class="read-status">既読</span>
+                    <span class="time">${timeStr}</span>
+                </div>
+            `;
+        } else {
+            innerHTML += `
+                <div class="bubble">${isTyping ? `<div class="typing-indicator"><span></span><span></span><span></span></div>` : text}</div>
+                <div class="meta-info">
+                    <span class="time">${timeStr}</span>
+                </div>
             `;
         }
-    </script>
+
+        msgDiv.innerHTML = innerHTML;
+        history.appendChild(msgDiv);
+        history.scrollTop = history.scrollHeight;
+
+        return msgDiv;
+    }
+
+    function showTypingAndReply(userRawText) {
+        const typingBubble = appendMessage('bot', '', true);
+
+        setTimeout(() => {
+            typingBubble.remove();
+            const replyText = generateReply(userRawText);
+            appendMessage('bot', replyText);
+        }, Math.floor(Math.random() * 500) + 400);
+    }
+</script>
+
 </body>
 </html>
