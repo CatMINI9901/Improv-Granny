@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>マルコフ_コロシアム Custom</title>
+    <title>人工無能</title>
     <style>
         :root {
             --line-green: #7493cd;
@@ -517,6 +517,7 @@
         } else {
             const bot = bots.find(b => b.id === roomId);
             if (!bot) return;
+            // ★【修正箇所】エラーの原因だった b.name を bot.name に修正しました
             document.getElementById('chatTitle').innerText = bot.name;
             controls.innerHTML = `<button class="text-btn" onclick="editBotSettings('${bot.id}')">設定変更</button>`;
 
@@ -575,7 +576,10 @@
 
     function generateReply(bot) {
         const keys = Object.keys(bot.dict);
-        
+        if (keys.length === 0 || bot.count < 2) {
+            const fallbacks = ["人間ですか？", "知能がほしいです。", "誰かお話ししましょう。", "こんにちは。"];
+            return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        }
         let currentKey = bot.beginnings.length > 0 
             ? bot.beginnings[Math.floor(Math.random() * bot.beginnings.length)]
             : keys[Math.floor(Math.random() * keys.length)];
@@ -614,7 +618,6 @@
         }
     }
 
-    // ★修正箇所：AI同士の相互学習（trainMarkov）を完全にカット
     function triggerSingleBotSpeech() {
         if (currentRoomId !== 'group') return;
 
@@ -628,12 +631,9 @@
             sender: 'bot', senderName: speaker.name, avatar: speaker.avatar, text: speechText, time: timeStr
         });
 
-        // ここの学習ループを削除しました
-
         saveToLocalStorage();
     }
 
-    // ★修正箇所：グループ内での発言は、全AIの学習対象から外しました
     function sendMessage() {
         const inputEl = document.getElementById('userInput');
         const text = inputEl.value.trim();
@@ -644,14 +644,13 @@
         if (currentRoomId === 'group') {
             appendMessageDOM('user', text, timeStr, "あなた", "");
             groupChatLog.push({ sender: 'user', senderName: "あなた", avatar: "", text: text, time: timeStr });
-            // グループ内でのユーザー発言時の一斉学習ループを削除しました
         } else {
             const bot = bots.find(b => b.id === currentRoomId);
             if (!bot) return;
 
             appendMessageDOM('user', text, timeStr, "あなた", "");
             bot.chatLog.push({ sender: 'user', text: text, time: timeStr });
-            trainMarkov(bot, text); // 個別部屋のみ学習を実行
+            trainMarkov(bot, text);
 
             setTimeout(() => {
                 const rep = generateReply(bot);
