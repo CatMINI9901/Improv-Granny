@@ -119,7 +119,6 @@
             align-items: center;
         }
 
-        /* アイコンのカスタム入力欄 */
         .avatar-input {
             width: 55px;
             height: 44px;
@@ -337,7 +336,6 @@
 
 <div class="app-container">
     
-    <!-- ==================== 1. ルーム一覧画面 ==================== -->
     <div id="friendView" class="view active">
         <div class="app-header">
             <span>トーク一覧 👥</span>
@@ -349,30 +347,25 @@
         </div>
         
         <div class="add-friend-box">
-            <!-- アイコン入力欄（初期値はJSでランダム注入） -->
             <input type="text" id="newBotAvatar" class="avatar-input" placeholder="🎨" maxlength="2">
             <input type="text" id="newBotName" class="name-input" placeholder="新しいBotの名前" maxlength="15">
             <button class="add-btn" onclick="addBot()">追加</button>
         </div>
         
         <div class="friend-list" id="friendList">
-            <!-- 動的生成 -->
-        </div>
+            </div>
     </div>
 
-    <!-- ==================== 2. トーク・グループ共通画面 ==================== -->
     <div id="chatView" class="view">
         <div class="app-header">
             <button class="text-btn" style="font-size: 0.95rem; border: none;" onclick="backToFriends()">＜ 戻る</button>
             <span id="chatTitle">ルーム名</span>
             <div id="headerGroupControls">
-                <!-- 動的配置 -->
-            </div>
+                </div>
         </div>
         
         <div class="chat-history" id="chatHistory">
-            <!-- 会話ログ -->
-        </div>
+            </div>
 
         <div class="chat-input-area">
             <textarea id="userInput" placeholder="メッセージを入力" rows="1"></textarea>
@@ -418,7 +411,6 @@
             this.style.height = Math.min(this.scrollHeight, 100) + 'px';
         });
 
-        // 次に作るBotのアイコン候補をはじめにセットしておく
         setRandomAvatarInput();
         renderRoomList();
     }
@@ -479,7 +471,7 @@
         let avatar = avatarInput.value.trim();
         
         if (!name) return;
-        if (!avatar) avatar = "🤖"; // 空っぽならデフォルト
+        if (!avatar) avatar = "🤖"; 
 
         bots.push({
             id: 'bot_' + Date.now(),
@@ -490,7 +482,7 @@
         
         saveToLocalStorage();
         nameInput.value = '';
-        setRandomAvatarInput(); // 次のランダムをセット
+        setRandomAvatarInput(); 
         renderRoomList();
     }
 
@@ -516,7 +508,7 @@
             controls.innerHTML = `<button id="autoBtn" class="text-btn" onclick="toggleAutoChat()">自動会話: OFF</button>`;
             
             if (groupChatLog.length === 0) {
-                appendSystemMessage("AI同士のグループです。右上の「自動会話」をONにすると、Botたちが勝手に話し合って互いの言葉を学習し始めます。");
+                appendSystemMessage("AI同士のグループです。右上の「自動会話」をONにすると、Botたちがそれぞれの学習データを使って勝手に話し合います。（AI同士の相互学習は行われません）");
             } else {
                 groupChatLog.forEach(msg => {
                     appendMessageDOM(msg.sender, msg.text, msg.time, msg.senderName, msg.avatar);
@@ -525,7 +517,7 @@
         } else {
             const bot = bots.find(b => b.id === roomId);
             if (!bot) return;
-            document.getElementById('chatTitle').innerText = bot.name;
+            document.getElementById('chatTitle').innerText = b.name;
             controls.innerHTML = `<button class="text-btn" onclick="editBotSettings('${bot.id}')">設定変更</button>`;
 
             if (bot.chatLog.length === 0) {
@@ -549,16 +541,15 @@
         renderRoomList();
     }
 
-    // ★名前とアイコン（文字・絵文字）の個別両方変更
     function editBotSettings(botId) {
         const bot = bots.find(b => b.id === botId);
         if (!bot) return;
 
         const newName = prompt("新しい「名前」を入力してください:", bot.name);
-        if (newName === null) return; // キャンセルされたら終了
+        if (newName === null) return; 
 
         const newAvatar = prompt("新しい「アイコン（絵文字や文字を2文字まで）」を入力してください:", bot.avatar);
-        if (newAvatar === null) return; // キャンセルされたら終了
+        if (newAvatar === null) return; 
 
         if (newName.trim()) bot.name = newName.trim();
         if (newAvatar.trim()) bot.avatar = newAvatar.trim();
@@ -584,7 +575,10 @@
 
     function generateReply(bot) {
         const keys = Object.keys(bot.dict);
-        
+        if (keys.length === 0 || bot.count < 2) {
+            const fallbacks = ["人間ですか？", "知能がほしいです。", "誰かお話ししましょう。", "こんにちは。"];
+            return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+        }
         let currentKey = bot.beginnings.length > 0 
             ? bot.beginnings[Math.floor(Math.random() * bot.beginnings.length)]
             : keys[Math.floor(Math.random() * keys.length)];
@@ -623,6 +617,7 @@
         }
     }
 
+    // ★修正箇所：AI同士の相互学習（trainMarkov）を完全にカット
     function triggerSingleBotSpeech() {
         if (currentRoomId !== 'group') return;
 
@@ -636,13 +631,12 @@
             sender: 'bot', senderName: speaker.name, avatar: speaker.avatar, text: speechText, time: timeStr
         });
 
-        bots.forEach((bot, index) => {
-            if (index !== speakerIndex) { trainMarkov(bot, speechText); }
-        });
+        // ここの学習ループを削除しました
 
         saveToLocalStorage();
     }
 
+    // ★修正箇所：グループ内での発言は、全AIの学習対象から外しました
     function sendMessage() {
         const inputEl = document.getElementById('userInput');
         const text = inputEl.value.trim();
@@ -653,14 +647,14 @@
         if (currentRoomId === 'group') {
             appendMessageDOM('user', text, timeStr, "あなた", "");
             groupChatLog.push({ sender: 'user', senderName: "あなた", avatar: "", text: text, time: timeStr });
-            bots.forEach(bot => trainMarkov(bot, text));
+            // グループ内でのユーザー発言時の一斉学習ループを削除しました
         } else {
             const bot = bots.find(b => b.id === currentRoomId);
             if (!bot) return;
 
             appendMessageDOM('user', text, timeStr, "あなた", "");
             bot.chatLog.push({ sender: 'user', text: text, time: timeStr });
-            trainMarkov(bot, text);
+            trainMarkov(bot, text); // 個別部屋のみ学習を実行
 
             setTimeout(() => {
                 const rep = generateReply(bot);
