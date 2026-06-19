@@ -2,8 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>マルコフ・コロシアム</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>マルコフ_コロシアム Custom</title>
     <style>
         :root {
             --line-green: #7493cd;
@@ -11,18 +11,24 @@
             --my-bubble: #85e249;
             --bot-bubble: #ffffff;
             --text-main: #333333;
-            --bg-gray: #f4f4f4;
+            --bg-gray: #f4f5f7;
+            --border-color: #e2e5ec;
         }
 
         * {
             box-sizing: border-box;
             -webkit-tap-highlight-color: transparent;
+            user-select: none;
+        }
+
+        input, textarea {
+            user-select: text;
         }
 
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
             background-color: #eef2f3;
             display: flex;
             justify-content: center;
@@ -46,14 +52,16 @@
         .app-header {
             background-color: var(--line-header);
             color: white;
-            padding: 16px;
-            font-size: 1.2rem;
+            padding: 0 16px;
+            padding-top: env(safe-area-inset-top, 0px);
+            font-size: 1.15rem;
             font-weight: bold;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            height: 56px;
+            height: calc(60px + env(safe-area-inset-top, 0px));
             flex-shrink: 0;
+            z-index: 100;
         }
 
         .header-btn-group {
@@ -63,16 +71,22 @@
 
         .text-btn {
             background: none;
-            border: 1px solid #ffffff66;
+            border: 1px solid rgba(255, 255, 255, 0.4);
             color: white;
-            padding: 4px 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
+            padding: 0 12px;
+            height: 36px;
+            min-width: 44px;
+            border-radius: 6px;
+            font-size: 0.85rem;
             cursor: pointer;
             font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* 自動会話ON時の目立つデザイン */
+        .text-btn:active { background-color: rgba(255, 255, 255, 0.1); }
+
         .text-btn.active-run {
             background-color: #ff5a5a;
             border-color: #ff5a5a;
@@ -81,7 +95,7 @@
 
         @keyframes pulse {
             0% { opacity: 1; }
-            50% { opacity: 0.6; }
+            50% { opacity: 0.7; }
             100% { opacity: 1; }
         }
 
@@ -89,118 +103,150 @@
             display: none;
             flex-grow: 1;
             flex-direction: column;
-            height: calc(100% - 56px);
+            height: 100%;
             overflow: hidden;
         }
 
-        .view.active {
-            display: flex;
-        }
+        .view.active { display: flex; }
 
-        /* ==================== 1. 一覧画面 ==================== */
+        /* ==================== 1. トーク一覧画面 ==================== */
         .add-friend-box {
-            padding: 15px;
+            padding: 12px 16px;
             background-color: var(--bg-gray);
-            border-bottom: 1px solid #e0e0e0;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
-            gap: 10px;
+            gap: 8px;
+            align-items: center;
         }
 
-        .add-friend-box input {
-            flex-grow: 1;
-            padding: 10px 15px;
+        /* アイコンのカスタム入力欄 */
+        .avatar-input {
+            width: 55px;
+            height: 44px;
+            text-align: center;
             border: 1px solid #ccc;
-            border-radius: 20px;
-            font-size: 0.95rem;
+            border-radius: 8px;
+            font-size: 1.3rem;
             outline: none;
+            background: white;
+            flex-shrink: 0;
+        }
+
+        .add-friend-box .name-input {
+            flex-grow: 1;
+            height: 44px;
+            padding: 0 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            background: white;
         }
 
         .add-btn {
             background-color: #5c7299;
             color: white;
             border: none;
+            height: 44px;
             padding: 0 16px;
-            border-radius: 20px;
+            border-radius: 8px;
             font-weight: bold;
+            font-size: 0.95rem;
             cursor: pointer;
+            white-space: nowrap;
         }
+        .add-btn:active { opacity: 0.8; }
 
         .friend-list {
             flex-grow: 1;
             overflow-y: auto;
-        }
-
-        /* グループ用の特別枠行 */
-        .group-row {
-            background-color: #eaf2ff;
-            border-bottom: 2px solid #cbdfff;
+            background-color: white;
+            -webkit-overflow-scrolling: touch;
         }
 
         .friend-item {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 14px 16px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 16px;
+            border-bottom: 1px solid #f2f4f7;
             cursor: pointer;
+            min-height: 76px;
         }
 
-        .friend-item:active { background-color: rgba(0,0,0,0.05); }
+        .friend-item:active { background-color: #f9fafb; }
+
+        .group-row { background-color: #f0f5ff; border-bottom: 1px solid #cbdfff; }
+        .group-row:active { background-color: #e1ecff; }
 
         .friend-info {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
+            flex-grow: 1;
+            overflow: hidden;
         }
 
         .friend-avatar {
-            width: 48px;
-            height: 48px;
-            background: #eef2f3;
+            width: 52px;
+            height: 52px;
+            background: #ffffff;
             border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
             font-size: 1.6rem;
             border: 1px solid #ddd;
+            flex-shrink: 0;
+            font-weight: bold;
+            color: var(--text-main);
+            overflow: hidden;
         }
 
         .friend-name-box {
             display: flex;
             flex-direction: column;
             gap: 4px;
+            overflow: hidden;
         }
 
-        .friend-name { font-weight: bold; color: var(--text-main); font-size: 1rem; }
-        .friend-count { font-size: 0.75rem; color: #888; }
-        .delete-btn { background-color: #ff5a5a; color: white; border: none; padding: 6px 12px; border-radius: 12px; font-size: 0.8rem; cursor: pointer; }
-
-        /* ==================== 2. トーク画面共通 ==================== */
-        .chat-view {
-            background-color: var(--line-green);
+        .friend-name { font-weight: bold; color: var(--text-main); font-size: 1.05rem; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+        .friend-count { font-size: 0.8rem; color: #888; }
+        
+        .delete-btn { 
+            background-color: #ffefef; 
+            color: #ff4d4d; 
+            border: 1px solid #ffcccc; 
+            padding: 8px 12px; 
+            border-radius: 8px; 
+            font-size: 0.85rem; 
+            font-weight: bold;
+            cursor: pointer; 
+            height: 38px;
+            flex-shrink: 0;
         }
+        .delete-btn:active { background-color: #ffdddd; }
+
+        /* ==================== 2. チャット画面 ==================== */
+        .chat-view { background-color: var(--line-green); }
 
         .chat-history {
             flex-grow: 1;
-            padding: 15px;
+            padding: 16px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 16px;
+            -webkit-overflow-scrolling: touch;
         }
 
-        .message {
-            display: flex;
-            align-items: flex-start;
-            max-width: 85%;
-        }
-
+        .message { display: flex; align-items: flex-start; max-width: 88%; }
         .message.bot { align-self: flex-start; }
         .message.user { align-self: flex-end; flex-direction: row-reverse; }
 
         .chat-avatar {
-            width: 40px;
-            height: 40px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             display: flex;
             justify-content: center;
@@ -208,30 +254,24 @@
             font-size: 1.4rem;
             margin-right: 8px;
             flex-shrink: 0;
-            border: 1px solid rgba(0,0,0,0.1);
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.05);
+            font-weight: bold;
+            color: var(--text-main);
+            overflow: hidden;
         }
 
-        /* グループ用に名前ラベルを追加 */
-        .bubble-wrapper {
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-        }
-
-        .bot-name-label {
-            font-size: 0.75rem;
-            color: rgba(255, 255, 255, 0.9);
-            padding-left: 2px;
-        }
+        .bubble-wrapper { display: flex; flex-direction: column; gap: 4px; }
+        .bot-name-label { font-size: 0.8rem; color: rgba(255, 255, 255, 0.9); padding-left: 4px; font-weight: bold; }
 
         .bubble {
             padding: 10px 14px;
-            border-radius: 15px;
-            font-size: 0.95rem;
-            line-height: 1.4;
+            border-radius: 16px;
+            font-size: 1rem;
+            line-height: 1.45;
             word-break: break-all;
             white-space: pre-wrap;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
 
         .bot .bubble { background-color: var(--bot-bubble); color: var(--text-main); border-top-left-radius: 2px; }
@@ -241,48 +281,56 @@
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
-            font-size: 0.7rem;
-            color: #ffffffcc;
-            margin: 0 5px;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 0 6px;
             min-width: 35px;
+            flex-shrink: 0;
         }
         .user .meta-info { text-align: right; }
-        .read-status { color: #e4ffad; font-weight: bold; }
+        .read-status { color: #dbff8a; font-weight: bold; font-size: 0.7rem; }
 
         .chat-input-area {
             background-color: #ffffff;
-            padding: 10px;
+            padding: 10px 12px;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
             display: flex;
-            gap: 8px;
-            align-items: center;
-            border-top: 1px solid #ddd;
+            gap: 10px;
+            align-items: flex-end;
+            border-top: 1px solid var(--border-color);
             flex-shrink: 0;
         }
 
         .chat-input-area textarea {
             flex-grow: 1;
-            height: 38px;
+            height: 44px;
+            max-height: 100px;
             border: 1px solid #ccc;
-            border-radius: 19px;
-            padding: 9px 15px;
+            border-radius: 12px;
+            padding: 11px 16px;
             box-sizing: border-box;
-            font-size: 0.95rem;
+            font-size: 16px;
             resize: none;
             outline: none;
             font-family: inherit;
+            line-height: 1.3;
+            background-color: var(--bg-gray);
         }
 
+        .chat-input-area textarea:focus { background-color: #fff; border-color: #5c7299; }
         .chat-input-area button {
             background-color: #5c7299;
             color: white;
             border: none;
-            width: 55px;
-            height: 38px;
-            border-radius: 19px;
+            width: 64px;
+            height: 44px;
+            border-radius: 12px;
             font-weight: bold;
+            font-size: 0.95rem;
             cursor: pointer;
             flex-shrink: 0;
         }
+        .chat-input-area button:active { opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -294,29 +342,31 @@
         <div class="app-header">
             <span>トーク一覧 👥</span>
             <div class="header-btn-group">
-                <button class="text-btn" onclick="exportAllData()">バックアップ</button>
+                <button class="text-btn" onclick="exportAllData()">保存</button>
                 <button class="text-btn" onclick="triggerImport()">復元</button>
                 <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAllData(event)">
             </div>
         </div>
         
         <div class="add-friend-box">
-            <input type="text" id="newBotName" placeholder="新しいBotを追加" maxlength="15">
+            <!-- アイコン入力欄（初期値はJSでランダム注入） -->
+            <input type="text" id="newBotAvatar" class="avatar-input" placeholder="🎨" maxlength="2">
+            <input type="text" id="newBotName" class="name-input" placeholder="新しいBotの名前" maxlength="15">
             <button class="add-btn" onclick="addBot()">追加</button>
         </div>
         
         <div class="friend-list" id="friendList">
-            <!-- JavaScriptで動的に生成 -->
+            <!-- 動的生成 -->
         </div>
     </div>
 
     <!-- ==================== 2. トーク・グループ共通画面 ==================== -->
     <div id="chatView" class="view">
         <div class="app-header">
-            <button class="text-btn" style="font-size: 1rem; padding: 2px 8px;" onclick="backToFriends()">＜ 戻る</button>
+            <button class="text-btn" style="font-size: 0.95rem; border: none;" onclick="backToFriends()">＜ 戻る</button>
             <span id="chatTitle">ルーム名</span>
             <div id="headerGroupControls">
-                <!-- グループ用の自動おしゃべり切り替えボタンがここに動的に入る -->
+                <!-- 動的配置 -->
             </div>
         </div>
         
@@ -325,7 +375,7 @@
         </div>
 
         <div class="chat-input-area">
-            <textarea id="userInput" placeholder="監視中... (介入発言も可能)" onkeydown="handleKeyDown(event)"></textarea>
+            <textarea id="userInput" placeholder="メッセージを入力" rows="1"></textarea>
             <button onclick="sendMessage()">送信</button>
         </div>
     </div>
@@ -333,16 +383,13 @@
 </div>
 
 <script>
-    // データ構造
     let bots = [];
-    let groupChatLog = []; // グループトーク全体の履歴
-    
-    let currentRoomId = null; // 'group' または 各Botのid
-    let autoChatIntervalId = null; // タイマーID
+    let groupChatLog = []; 
+    let currentRoomId = null; 
+    let autoChatIntervalId = null; 
 
-    const avatars = ["🤖", "🐱", "🐶", "🦊", "🐻", "🦁", "🐸", "🐹", "🦄", "🐼"];
+    const avatars = ["🤖", "🐱", "🐶", "🦊", "🐻", "🦁", "🐸", "🐹", "🦄", "🐼", "👽", "👻", "👑", "🔥", "💩"];
 
-    // 起動時の初期化
     function initApp() {
         const localBots = localStorage.getItem('markov_arena_bots');
         const localGroupLog = localStorage.getItem('markov_arena_group_log');
@@ -354,7 +401,6 @@
             try { groupChatLog = JSON.parse(localGroupLog); } catch(e) { groupChatLog = []; }
         }
 
-        // 誰もいない場合は初期フレンドを2人用意
         if (bots.length === 0) {
             bots.push({
                 id: "bot_1", name: "人間ボットA", avatar: "🤖",
@@ -366,7 +412,19 @@
             saveToLocalStorage();
         }
 
+        const tx = document.getElementById('userInput');
+        tx.addEventListener('input', function() {
+            this.style.height = '44px';
+            this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+        });
+
+        // 次に作るBotのアイコン候補をはじめにセットしておく
+        setRandomAvatarInput();
         renderRoomList();
+    }
+
+    function setRandomAvatarInput() {
+        document.getElementById('newBotAvatar').value = avatars[Math.floor(Math.random() * avatars.length)];
     }
 
     function saveToLocalStorage() {
@@ -374,38 +432,37 @@
         localStorage.setItem('markov_arena_group_log', JSON.stringify(groupChatLog));
     }
 
-    // 画面の一覧描画
     function renderRoomList() {
         const listEl = document.getElementById('friendList');
         listEl.innerHTML = '';
 
-        // 固定枠：AIコロシアム（グループ部屋）
+        // グループ部屋
         const groupItem = document.createElement('div');
         groupItem.className = 'friend-item group-row';
         groupItem.onclick = () => openRoom('group');
         groupItem.innerHTML = `
             <div class="friend-info">
-                <div class="friend-avatar" style="background:#cbdfff">👥</div>
+                <div class="friend-avatar" style="background:#cbdfff; border-color:#9cbfff;">👥</div>
                 <div class="friend-name-box">
                     <div class="friend-name">【AIグループ】全員の部屋</div>
-                    <div class="friend-count">参加AI: ${bots.length} 人 (自動会話・相互学習モード)</div>
+                    <div class="friend-count">参加AI: ${bots.length} 人</div>
                 </div>
             </div>
-            <span style="font-size:0.8rem; color:#5c7299; font-weight:bold; margin-right:8px;">入室</span>
+            <span style="font-size:0.85rem; color:#5c7299; font-weight:bold; padding-right:4px;">入室</span>
         `;
         listEl.appendChild(groupItem);
 
-        // 個別Bot一覧
+        // 個別Bot
         bots.forEach(bot => {
             const item = document.createElement('div');
             item.className = 'friend-item';
             item.onclick = () => openRoom(bot.id);
             item.innerHTML = `
                 <div class="friend-info">
-                    <div class="friend-avatar">${bot.avatar}</div>
+                    <div class="friend-avatar">${escapeHTML(bot.avatar || '🤖')}</div>
                     <div class="friend-name-box">
                         <div class="friend-name">${escapeHTML(bot.name)}</div>
-                        <div class="friend-count">個別学習回数: ${bot.count} 回</div>
+                        <div class="friend-count">学習回数: ${bot.count} 回</div>
                     </div>
                 </div>
                 <button class="delete-btn" onclick="deleteBot(event, '${bot.id}')">削除</button>
@@ -415,18 +472,25 @@
     }
 
     function addBot() {
-        const input = document.getElementById('newBotName');
-        const name = input.value.trim();
+        const nameInput = document.getElementById('newBotName');
+        const avatarInput = document.getElementById('newBotAvatar');
+        
+        const name = nameInput.value.trim();
+        let avatar = avatarInput.value.trim();
+        
         if (!name) return;
+        if (!avatar) avatar = "🤖"; // 空っぽならデフォルト
 
         bots.push({
             id: 'bot_' + Date.now(),
             name: name,
-            avatar: avatars[Math.floor(Math.random() * avatars.length)],
+            avatar: avatar,
             dict: {}, beginnings: [], count: 0, chatLog: []
         });
+        
         saveToLocalStorage();
-        input.value = '';
+        nameInput.value = '';
+        setRandomAvatarInput(); // 次のランダムをセット
         renderRoomList();
     }
 
@@ -438,38 +502,34 @@
         renderRoomList();
     }
 
-    // 部屋に入る
     function openRoom(roomId) {
         currentRoomId = roomId;
         const history = document.getElementById('chatHistory');
         history.innerHTML = '';
-        
         const controls = document.getElementById('headerGroupControls');
         controls.innerHTML = '';
 
+        document.getElementById('userInput').style.height = '44px';
+
         if (roomId === 'group') {
-            // === グループ部屋の処理 ===
             document.getElementById('chatTitle').innerText = "AI監視ルーム";
-            
-            // 自動会話切り替えボタンを設置
             controls.innerHTML = `<button id="autoBtn" class="text-btn" onclick="toggleAutoChat()">自動会話: OFF</button>`;
             
             if (groupChatLog.length === 0) {
-                appendSystemMessage("AI同士のグループルームです。右上の「自動会話」をONにすると、Botたちが勝手に話し合って互いの言葉を学習し始めます。");
+                appendSystemMessage("AI同士のグループです。右上の「自動会話」をONにすると、Botたちが勝手に話し合って互いの言葉を学習し始めます。");
             } else {
                 groupChatLog.forEach(msg => {
                     appendMessageDOM(msg.sender, msg.text, msg.time, msg.senderName, msg.avatar);
                 });
             }
         } else {
-            // === 個別部屋の処理 ===
             const bot = bots.find(b => b.id === roomId);
             if (!bot) return;
             document.getElementById('chatTitle').innerText = bot.name;
-            controls.innerHTML = `<button class="text-btn" onclick="renameBot('${bot.id}')">改名</button>`;
+            controls.innerHTML = `<button class="text-btn" onclick="editBotSettings('${bot.id}')">設定変更</button>`;
 
             if (bot.chatLog.length === 0) {
-                appendMessageDOM('bot', "こんにちは！あなたの言葉だけで育つボットです。タイマンでお話ししましょう。", getNowTime(), bot.name, bot.avatar);
+                appendMessageDOM('bot', "こんにちは！タイマンでお話ししましょう。何か話しかけてみてね！", getNowTime(), bot.name, bot.avatar);
             } else {
                 bot.chatLog.forEach(msg => {
                     appendMessageDOM(msg.sender, msg.text, msg.time, bot.name, bot.avatar);
@@ -479,31 +539,34 @@
 
         document.getElementById('friendView').classList.remove('active');
         document.getElementById('chatView').classList.add('active');
-        setTimeout(() => { history.scrollTop = history.scrollHeight; }, 50);
+        setTimeout(() => { history.scrollTop = history.scrollHeight; }, 60);
     }
 
     function backToFriends() {
-        // 部屋を出るときは自動会話を必ずOFFにする
-        if (autoChatIntervalId) {
-            toggleAutoChat();
-        }
+        if (autoChatIntervalId) { toggleAutoChat(); }
         document.getElementById('chatView').classList.remove('active');
         document.getElementById('friendView').classList.add('active');
         renderRoomList();
     }
 
-    function renameBot(botId) {
+    // ★名前とアイコン（文字・絵文字）の個別両方変更
+    function editBotSettings(botId) {
         const bot = bots.find(b => b.id === botId);
         if (!bot) return;
-        const n = prompt("新しい名前:", bot.name);
-        if (n && n.trim()) {
-            bot.name = n.trim();
-            document.getElementById('chatTitle').innerText = bot.name;
-            saveToLocalStorage();
-        }
+
+        const newName = prompt("新しい「名前」を入力してください:", bot.name);
+        if (newName === null) return; // キャンセルされたら終了
+
+        const newAvatar = prompt("新しい「アイコン（絵文字や文字を2文字まで）」を入力してください:", bot.avatar);
+        if (newAvatar === null) return; // キャンセルされたら終了
+
+        if (newName.trim()) bot.name = newName.trim();
+        if (newAvatar.trim()) bot.avatar = newAvatar.trim();
+
+        document.getElementById('chatTitle').innerText = bot.name;
+        saveToLocalStorage();
     }
 
-    // --- 【コア】マルコフ連鎖の学習と生成 ---
     function trainMarkov(bot, text) {
         const trimmed = text.trim();
         if (trimmed.length < 3) return;
@@ -521,6 +584,7 @@
 
     function generateReply(bot) {
         const keys = Object.keys(bot.dict);
+        
         let currentKey = bot.beginnings.length > 0 
             ? bot.beginnings[Math.floor(Math.random() * bot.beginnings.length)]
             : keys[Math.floor(Math.random() * keys.length)];
@@ -539,60 +603,46 @@
         return result;
     }
 
-    // --- 【新機能】AI同士の自動会話のON/OFF駆動 ---
     function toggleAutoChat() {
         const btn = document.getElementById('autoBtn');
         if (!btn) return;
 
         if (autoChatIntervalId) {
-            // 停止
             clearInterval(autoChatIntervalId);
             autoChatIntervalId = null;
             btn.innerText = "自動会話: OFF";
             btn.classList.remove('active-run');
         } else {
-            // 開始
             if (bots.length < 2) {
                 alert("AI同士で会話させるには、Botを最低2人以上作成してください。");
                 return;
             }
             btn.innerText = "自動会話: ON";
             btn.classList.add('active-run');
-            
-            // 2.5秒ごとに誰かが喋るループ
             autoChatIntervalId = setInterval(triggerSingleBotSpeech, 2500);
         }
     }
 
-    // 誰か1人が発言し、他全員がそれを聴いて学習する
     function triggerSingleBotSpeech() {
         if (currentRoomId !== 'group') return;
 
-        // 1. 喋るBotをランダムに決定
         const speakerIndex = Math.floor(Math.random() * bots.length);
         const speaker = bots[speakerIndex];
-        
-        // 2. そのBotのマルコフ脳から文章を生成
         const speechText = generateReply(speaker);
         const timeStr = getNowTime();
 
-        // 3. 画面に描写 ＆ グループ全体のログに記録
         appendMessageDOM('bot', speechText, timeStr, speaker.name, speaker.avatar);
         groupChatLog.push({
             sender: 'bot', senderName: speaker.name, avatar: speaker.avatar, text: speechText, time: timeStr
         });
 
-        // 4. 【重要】喋った本人「以外」のグループ全員に、この発言を学習させる！！
         bots.forEach((bot, index) => {
-            if (index !== speakerIndex) {
-                trainMarkov(bot, speechText);
-            }
+            if (index !== speakerIndex) { trainMarkov(bot, speechText); }
         });
 
         saveToLocalStorage();
     }
 
-    // ユーザーからのチャット介入（あるいは監視中のつぶやき）
     function sendMessage() {
         const inputEl = document.getElementById('userInput');
         const text = inputEl.value.trim();
@@ -601,14 +651,10 @@
         const timeStr = getNowTime();
 
         if (currentRoomId === 'group') {
-            // グループ内でユーザーが発言した場合
             appendMessageDOM('user', text, timeStr, "あなた", "");
             groupChatLog.push({ sender: 'user', senderName: "あなた", avatar: "", text: text, time: timeStr });
-            
-            // グループの全Botがユーザーの発言を一斉に学習！
             bots.forEach(bot => trainMarkov(bot, text));
         } else {
-            // 個別チャットの場合
             const bot = bots.find(b => b.id === currentRoomId);
             if (!bot) return;
 
@@ -616,7 +662,6 @@
             bot.chatLog.push({ sender: 'user', text: text, time: timeStr });
             trainMarkov(bot, text);
 
-            // 個別対話のBotが返答
             setTimeout(() => {
                 const rep = generateReply(bot);
                 appendMessageDOM('bot', rep, getNowTime(), bot.name, bot.avatar);
@@ -626,10 +671,10 @@
         }
 
         inputEl.value = '';
+        inputEl.style.height = '44px';
         saveToLocalStorage();
     }
 
-    // --- メッセージDOM生成ヘルパー ---
     function appendMessageDOM(sender, text, timeStr, nameLabel, avatar) {
         const history = document.getElementById('chatHistory');
         const msgDiv = document.createElement('div');
@@ -637,7 +682,7 @@
 
         let innerHTML = '';
         if (sender === 'bot') {
-            innerHTML += `<div class="chat-avatar" style="background:#f0f0f0">${avatar}</div>`;
+            innerHTML += `<div class="chat-avatar">${escapeHTML(avatar || '🤖')}</div>`;
             innerHTML += `
                 <div class="bubble-wrapper">
                     <div class="bot-name-label">${escapeHTML(nameLabel)}</div>
@@ -663,16 +708,9 @@
     function appendSystemMessage(text) {
         const history = document.getElementById('chatHistory');
         const div = document.createElement('div');
-        div.style = "text-align:center; color:rgba(255,255,255,0.8); font-size:0.8rem; margin:10px 20px; background:rgba(0,0,0,0.15); padding:8px; border-radius:8px;";
+        div.style = "text-align:center; color:rgba(255,255,255,0.9); font-size:0.8rem; margin:10px 16px; background:rgba(0,0,0,0.15); padding:10px; border-radius:10px; line-height:1.4;";
         div.innerText = text;
         history.appendChild(div);
-    }
-
-    function handleKeyDown(e) {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
     }
 
     function getNowTime() {
@@ -684,7 +722,6 @@
         return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // --- バックアップ、復元 ---
     function exportAllData() {
         const pack = { bots: bots, groupLog: groupChatLog };
         const blob = new Blob([JSON.stringify(pack, null, 2)], { type: "application/json" });
