@@ -517,7 +517,7 @@
         } else {
             const bot = bots.find(b => b.id === roomId);
             if (!bot) return;
-            document.getElementById('chatTitle').innerText = b.name;
+            document.getElementById('chatTitle').innerText = bot.name;
             controls.innerHTML = `<button class="text-btn" onclick="editBotSettings('${bot.id}')">設定変更</button>`;
 
             if (bot.chatLog.length === 0) {
